@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archie Desktop — дизайн-система</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080F; --surface:#0D1019; --elevated:#151929; --overlay:rgba(10,12,22,.72);
+  --glass-fill:rgba(255,255,255,.045); --glass-border:rgba(255,255,255,.09); --glass-hi:rgba(255,255,255,.14);
+  --primary:#8B7CFF; --primary-hover:#A99DFF; --primary-active:#6E5DF0; --cyan:#22D3EE;
+  --gradient:linear-gradient(135deg,#8B7CFF 0%,#22D3EE 100%);
+  --glow:rgba(139,124,255,.35);
+  --success:#2DD4BF; --info:#38BDF8; --warning:#C084FC; --danger:#FB7185;
+  --text:#F1F3FA; --muted:#A6ADC4; --tertiary:#6B7288;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px;
+  --sh-sm:0 1px 2px rgba(0,0,0,.35); --sh-md:0 4px 16px rgba(0,0,0,.4); --sh-lg:0 12px 40px rgba(0,0,0,.5);
+  --sh-glass:inset 0 1px 0 rgba(255,255,255,.06), 0 8px 32px rgba(0,0,0,.45);
+  --glow-accent:0 0 24px rgba(139,124,255,.35), 0 0 64px rgba(139,124,255,.15);
+  --glow-cyan:0 0 24px rgba(34,211,238,.35);
+  --ease:cubic-bezier(.22,1,.36,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --font-display:'Unbounded',Manrope,system-ui,sans-serif;
+  --font-body:'Manrope',Inter,system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font-body);
+  font-size:16px; line-height:1.55; letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 480px at 85% -10%, rgba(139,124,255,.10), transparent 60%),
+    radial-gradient(700px 420px at 8% 30%, rgba(34,211,238,.05), transparent 60%),
+    radial-gradient(800px 500px at 60% 110%, rgba(45,212,191,.05), transparent 60%);
+}
+::selection{background:rgba(139,124,255,.35)}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font-family:inherit}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;letter-spacing:.01em}
+.mono{font-family:var(--font-mono);font-feature-settings:'tnum'}
+.wrap{max-width:1200px;margin:0 auto;padding:0 clamp(16px,3vw,40px);position:relative;z-index:1}
+
+/* ---------- HERO ---------- */
+.hero{padding:clamp(48px,8vw,96px) 0 40px;text-align:left;position:relative}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+  background:var(--glass-fill);border:1px solid var(--glass-border);
+  font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+.hero-eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--gradient);box-shadow:var(--glow-cyan)}
+.hero h1{
+  font-size:clamp(34px,6vw,64px);line-height:1.05;margin:22px 0 14px;
+  background:linear-gradient(120deg,#F1F3FA 30%,#8B7CFF 65%,#22D3EE 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero p{max-width:640px;color:var(--muted);font-size:clamp(15px,1.6vw,18px)}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.hero-chip{
+  padding:8px 14px;border-radius:999px;background:var(--glass-fill);
+  border:1px solid var(--glass-border);font-size:12.5px;color:var(--muted);
+}
+.hero-chip b{color:var(--text);font-weight:600}
+
+/* ---------- SECTION HEADS ---------- */
+.sec{padding:56px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.sec-num{font-family:var(--font-mono);font-size:13px;color:var(--primary);letter-spacing:.1em}
+.sec-head h2{font-size:clamp(22px,3vw,32px)}
+.sec-sub{color:var(--muted);max-width:680px;margin-bottom:28px}
+
+/* ---------- DASHBOARD PROTOTYPE ---------- */
+.window{
+  border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--glass-border);
+  box-shadow:var(--sh-lg);overflow:hidden;
+}
+.window-bar{
+  display:flex;align-items:center;gap:8px;padding:12px 18px;
+  background:rgba(255,255,255,.02);border-bottom:1px solid var(--glass-border);
+}
+.window-bar i{width:11px;height:11px;border-radius:50%;background:var(--glass-hi)}
+.window-bar i:first-child{background:rgba(251,113,133,.55)}
+.window-bar span{margin-left:10px;font-family:var(--font-mono);font-size:12px;color:var(--tertiary)}
+.dash{display:grid;grid-template-columns:232px 1fr;min-height:660px}
+
+/* rail */
+.rail{
+  display:flex;flex-direction:column;gap:4px;padding:20px 12px;
+  border-right:1px solid var(--glass-border);background:rgba(255,255,255,.015);
+}
+.rail-logo{display:flex;align-items:center;gap:12px;padding:6px 10px 20px}
+.logo-orb{
+  width:40px;height:40px;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 35% 30%,#A99DFF 0%,#8B7CFF 45%,#4a3fb0 100%);
+  box-shadow:var(--glow-accent), inset 0 0 12px rgba(255,255,255,.25), inset 0 -6px 12px rgba(0,0,0,.35);
+  animation:logoBreathe 4s var(--ease) infinite;
+}
+@keyframes logoBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.rail-logo b{font-family:var(--font-display);font-size:15px;font-weight:600}
+.rail-logo small{display:block;font-size:11px;color:var(--tertiary)}
+.rail-tab{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);
+  color:var(--muted);font-size:14px;font-weight:500;text-align:left;width:100%;
+  transition:background 180ms var(--ease),color 180ms var(--ease);
+}
+.rail-tab svg{width:18px;height:18px;flex:none;opacity:.85}
+.rail-tab:hover{background:var(--glass-fill);color:var(--text)}
+.rail-tab.active{background:linear-gradient(135deg,rgba(139,124,255,.16),rgba(34,211,238,.08));color:var(--text);box-shadow:inset 0 0 0 1px rgba(139,124,255,.35)}
+.rail-tab kbd{
+  margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--tertiary);
+  border:1px solid var(--glass-border);border-radius:5px;padding:1px 5px;
+}
+.rail-foot{margin-top:auto;padding-top:16px}
+.privacy-badge{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);
+  background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.22);font-size:12.5px;color:var(--muted);
+}
+.privacy-badge i{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(45,212,191,.8);flex:none}
+.privacy-badge svg{width:15px;height:15px;color:var(--success);flex:none}
+
+/* content */
+.content{padding:clamp(16px,3vw,32px);min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.panel-head h2{font-size:clamp(20px,2.4vw,26px)}
+.panel-head .sub{color:var(--muted);font-size:13.5px;margin-top:4px}
+.status-pill{
+  display:inline-flex;align-items:center;gap:9px;padding:8px 14px;border-radius:999px;
+  background:var(--glass-fill);border:1px solid var(--glass-border);
+  font-family:var(--font-mono);font-size:12px;color:var(--muted);
+}
+.status-pill i{width:8px;height:8px;border-radius:50%;background:var(--success);animation:pulseDot 1.8s ease-out infinite}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(45,212,191,.5)}70%{box-shadow:0 0 0 8px rgba(45,212,191,0)}100%{box-shadow:0 0 0 0 rgba(45,212,191,0)}}
+
+/* metric grid */
+.metrics{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px}
+.card{
+  background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--r-lg);
+  padding:20px;box-shadow:var(--sh-glass);
+  transition:transform 180ms var(--ease),box-shadow 180ms var(--ease),border-color 180ms var(--ease);
+}
+.card:hover{transform:translateY(-2px);border-color:var(--glass-hi);box-shadow:var(--sh-glass),var(--glow-accent)}
+.card-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--tertiary);margin-bottom:10px}
+.card-value{font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1}
+.card-value small{font-size:15px;color:var(--muted);font-family:var(--font-body);font-weight:500}
+.m-ram{grid-column:span 3}
+.m-mission{grid-column:span 3}
+.m-frust{grid-column:span 6}
+.spark{width:100%;height:44px;margin-top:12px}
+.mission-flex{display:flex;align-items:center;gap:16px}
+.mission-ring{flex:none}
+.mission-info b{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.mission-info span{font-size:12.5px;color:var(--muted)}
+.frust-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.frust-legend{display:flex;gap:14px;font-size:11.5px;color:var(--tertiary)}
+.frust-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:0}
+.frust-chart{width:100%;height:180px;margin-top:8px;position:relative}
+#frust-tip{
+  position:absolute;pointer-events:none;padding:6px 10px;border-radius:var(--r-sm);
+  background:var(--elevated);border:1px solid var(--glass-border);box-shadow:var(--sh-md);
+  font-family:var(--font-mono);font-size:11.5px;color:var(--text);white-space:nowrap;
+  opacity:0;transition:opacity 150ms var(--ease);transform:translate(-50%,-120%);
+}
+
+/* lower row */
+.row2{display:grid;grid-template-columns:7fr 5fr;gap:16px}
+.now-reply{
+  font-size:15.5px;color:var(--text);padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(139,124,255,.07);border-left:3px solid var(--primary);margin:12px 0 16px;
+}
+.now-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r-md);
+  font-size:13.5px;font-weight:600;transition:transform 100ms var(--ease),box-shadow 180ms var(--ease),background 180ms var(--ease);
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--gradient);color:#0B0C14;box-shadow:0 4px 18px rgba(139,124,255,.35)}
+.btn-primary:hover{box-shadow:var(--glow-accent)}
+.btn-ghost{background:var(--glass-fill);border:1px solid var(--glass-border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--glass-hi);background:rgba(255,255,255,.07)}
+.btn svg{width:15px;height:15px}
+.zsense-shot{
+  position:relative;border-radius:var(--r-md);overflow:hidden;margin-top:12px;
+  background:linear-gradient(160deg,#10131f 0%,#0a0c15 100%);border:1px solid var(--glass-border);
+  aspect-ratio:16/8.2;
+}
+.zs-line{position:absolute;left:8%;right:8%;height:7px;border-radius:4px;background:rgba(255,255,255,.06)}
+.zs-box{position:absolute;border:1.5px solid rgba(34,211,238,.4);border-radius:6px;background:rgba(34,211,238,.05)}
+.zs-box em{
+  position:absolute;top:-18px;left:-1px;font-style:normal;font-family:var(--font-mono);font-size:9.5px;
+  color:var(--cyan);background:rgba(10,12,22,.85);padding:1px 6px;border-radius:4px;border:1px solid rgba(34,211,238,.3);
+  white-space:nowrap;
+}
+.zsense-cap{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--tertiary)}
+
+/* ---------- EVENTS ---------- */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;
+  background:var(--glass-fill);border:1px solid var(--glass-border);
+  font-size:12.5px;font-weight:600;color:var(--muted);
+  transition:all 180ms var(--ease);
+}
+.chip i{width:7px;height:7px;border-radius:50%}
+.chip:hover{color:var(--text);border-color:var(--glass-hi)}
+.chip[data-filter="all"].active{background:rgba(139,124,255,.15);border-color:var(--primary);color:var(--text)}
+.chip[data-filter="voice"].active{background:rgba(139,124,255,.15);border-color:var(--primary);color:var(--text)}
+.chip[data-filter="zsense"].active{background:rgba(34,211,238,.12);border-color:var(--cyan);color:var(--text)}
+.chip[data-filter="memory"].active{background:rgba(45,212,191,.12);border-color:var(--success);color:var(--text)}
+.chip[data-filter="system"].active{background:rgba(166,173,196,.12);border-color:var(--muted);color:var(--text)}
+.chip[data-filter="error"].active{background:rgba(251,113,133,.12);border-color:var(--danger);color:var(--text)}
+.search{
+  margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--r-md);
+  background:var(--glass-fill);border:1px solid var(--glass-border);min-width:200px;
+}
+.search svg{width:14px;height:14px;color:var(--tertiary);flex:none}
+.search input{background:none;border:none;color:var(--text);font-family:var(--font-mono);font-size:12.5px;width:100%;outline:none}
+.search input::placeholder{color:var(--tertiary)}
+.live-dot{
+  display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.12em;color:var(--cyan);padding:7px 12px;border-radius:999px;
+  border:1px solid rgba(34,211,238,.3);background:rgba(34,211,238,.06);
+}
+.live-dot i{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulseDot 1.4s ease-out infinite}
+.event-list{position:relative;padding-left:26px}
+.event-list::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--glass-border)}
+.event{position:relative;margin-bottom:8px}
+.event::before{
+  content:"";position:absolute;left:-23px;top:18px;width:9px;height:9px;border-radius:50%;
+  background:var(--ev-color,var(--muted));box-shadow:0 0 8px var(--ev-color,var(--muted));
+}
+.event[data-type="voice"]{--ev-color:var(--primary)}
+.event[data-type="zsense"]{--ev-color:var(--cyan)}
+.event[data-type="memory"]{--ev-color:var(--success)}
+.event[data-type="system"]{--ev-color:var(--tertiary)}
+.event[data-type="error"]{--ev-color:var(--danger)}
+.event-head{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 16px;
+  border-radius:var(--r-md);background:var(--glass-fill);border:1px solid var(--glass-border);
+  transition:background 180ms var(--ease),border-color 180ms var(--ease);
+}
+.event-head:hover{background:var(--glass-hi);border-color:var(--glass-hi)}
+.event-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;flex:none;
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+  background:color-mix(in srgb,var(--ev-color) 14%,transparent);color:var(--ev-color);
+}
+.event-badge i{width:5px;height:5px;border-radius:50%;background:var(--ev-color)}
+.event-text{flex:1;font-size:13.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.event-time{font-family:var(--font-mono);font-size:11.5px;color:var(--tertiary);flex:none}
+.event-chev{width:14px;height:14px;color:var(--tertiary);flex:none;transition:transform 250ms var(--ease)}
+.event.open .event-chev{transform:rotate(90deg)}
+.event-details{display:grid;grid-template-rows:0fr;transition:grid-template-rows 250ms var(--ease)}
+.event.open .event-details{grid-template-rows:1fr}
+.event-details>div{overflow:hidden}
+.event-details pre{
+  margin:6px 0 4px;padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(0,0,0,.35);border:1px solid var(--glass-border);
+  font-family:var(--font-mono);font-size:12px;color:var(--muted);line-height:1.6;overflow-x:auto;white-space:pre-wrap;
+}
+.event.flash .event-head{animation:flashRow 1.2s var(--ease)}
+@keyframes flashRow{0%{background:rgba(139,124,255,.14);border-color:rgba(139,124,255,.4)}100%{background:var(--glass-fill)}}
+.event.enter{animation:evEnter .3s var(--ease)}
+@keyframes evEnter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.events-empty{padding:36px;text-align:center;color:var(--tertiary);font-size:13.5px}
+
+/* ---------- ONBOARDING ---------- */
+.onb-wrap{max-width:560px;margin:0 auto}
+.onb-progress{height:4px;border-radius:999px;background:var(--glass-border);overflow:hidden;margin-bottom:28px}
+.onb-progress i{display:block;height:100%;width:25%;background:var(--gradient);border-radius:999px;transition:width 400ms var(--ease)}
+.stepper{display:flex;gap:14px;margin-bottom:20px}
+.step-item{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.step-dot{
+  width:10px;height:10px;border-radius:50%;flex:none;background:transparent;
+  border:2px solid var(--glass-border);position:relative;transition:all 300ms var(--ease);
+}
+.step-item.done .step-dot{background:var(--success);border-color:var(--success)}
+.step-item.active .step-dot{background:var(--primary);border-color:var(--primary)}
+.step-item.active .step-dot::after{
+  content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid var(--primary);
+  animation:pulseDot 1.8s ease-out infinite;
+}
+.step-name{font-size:11.5px;color:var(--tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step-item.active .step-name{color:var(--text);font-weight:600}
+.step-item.done .step-name{color:var(--muted)}
+.step-card{
+  background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--r-xl);
+  padding:clamp(20px,3vw,32px);box-shadow:var(--sh-glass);
+}
+.step-card h3{font-size:22px;margin-bottom:8px}
+.step-card .step-desc{color:var(--muted);font-size:14px;margin-bottom:22px}
+.step-orb{
+  width:64px;height:64px;border-radius:50%;margin-bottom:18px;
+  background:radial-gradient(circle at 35% 30%,#A99DFF 0%,#8B7CFF 45%,#4a3fb0 100%);
+  box-shadow:var(--glow-accent), inset 0 0 16px rgba(255,255,255,.2);
+  animation:logoBreathe 4s var(--ease) infinite;
+}
+.vu{display:flex;align-items:flex-end;gap:4px;height:56px;margin:16px 0 20px}
+.vu i{
+  flex:1;border-radius:3px 3px 0 0;min-height:8%;
+  background:linear-gradient(to top,var(--success),var(--primary));
+  transition:height 120ms var(--ease);
+}
+.persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.persona{
+  padding:14px 12px;border-radius:var(--r-md);background:var(--glass-fill);border:1px solid var(--glass-border);
+  text-align:left;transition:all 180ms var(--ease);
+}
+.persona:hover{border-color:var(--glass-hi)}
+.persona.sel{border-color:var(--primary);background:rgba(139,124,255,.1);box-shadow:0 0 0 1px var(--primary)}
+.persona b{display:block;font-size:13.5px;margin-bottom:5px}
+.persona span{font-size:11.5px;color:var(--muted);line-height:1.45;display:block}
+.priv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.priv-card{
+  padding:16px 14px;border-radius:var(--r-md);background:var(--glass-fill);border:1px solid var(--glass-border);
+  text-align:left;transition:all 180ms var(--ease);
+}
+.priv-card:hover{border-color:var(--glass-hi)}
+.priv-card.sel{border-color:var(--success);background:rgba(45,212,191,.08);box-shadow:0 0 0 1px var(--success)}
+.priv-card b{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:6px}
+.priv-card b svg{width:15px;height:15px;color:var(--success)}
+.priv-card span{font-size:11.5px;color:var(--muted);display:block;line-height:1.5}
+.step-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
+.step-actions .spacer{flex:1}
+.step-skip{font-size:12.5px;color:var(--tertiary);text-decoration:underline;text-underline-offset:3px}
+.step-skip:hover{color:var(--muted)}
+
+/* ---------- SETTINGS ---------- */
+.settings-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+.set-sec{margin-bottom:16px}
+.set-sec h3{font-size:15px;font-family:var(--font-body);font-weight:700;margin-bottom:4px}
+.set-row{
+  display:flex;align-items:center;gap:16px;padding:15px 2px;border-bottom:1px solid var(--glass-border);
+}
+.set-row:last-child{border-bottom:none}
+.set-info{flex:1;min-width:0}
+.set-info b{display:block;font-size:13.5px;font-weight:600}
+.set-info span{font-size:12px;color:var(--tertiary)}
+.toggle{
+  width:44px;height:24px;border-radius:999px;background:rgba(255,255,255,.1);position:relative;flex:none;
+  transition:background 220ms var(--ease);border:1px solid var(--glass-border);
+}
+.toggle::after{
+  content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+  background:#fff;box-shadow:var(--sh-sm);
+  transition:transform 220ms var(--spring);
+}
+.toggle[aria-checked="true"]{background:var(--gradient);border-color:transparent}
+.toggle[aria-checked="true"]::after{transform:translateX(20px)}
+.slider{-webkit-appearance:none;appearance:none;width:160px;height:4px;border-radius:999px;background:rgba(255,255,255,.12);outline-offset:4px}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;cursor:pointer;
+  box-shadow:0 0 0 3px rgba(139,124,255,.35), var(--sh-sm);transition:box-shadow 180ms var(--ease);
+}
+.slider::-webkit-slider-thumb:hover{box-shadow:0 0 0 5px rgba(139,124,255,.4), var(--sh-sm)}
+.slider::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(139,124,255,.35)}
+.slider-val{font-family:var(--font-mono);font-size:12px;color:var(--muted);width:44px;text-align:right;flex:none}
+select.sel{
+  background:var(--elevated);border:1px solid var(--glass-border);color:var(--text);
+  border-radius:var(--r-sm);padding:8px 12px;font-family:var(--font-body);font-size:13px;outline-offset:2px;
+}
+.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.tier{padding:12px;border-radius:var(--r-md);background:rgba(0,0,0,.25);border:1px solid var(--glass-border);text-align:center}
+.tier b{display:block;font-family:var(--font-mono);font-size:18px;font-weight:500}
+.tier span{font-size:10.5px;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase}
+.model-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--glass-border);font-size:12.5px}
+.model-row:last-child{border:none}
+.model-row i{width:8px;height:8px;border-radius:50%;flex:none}
+.model-row .ok{background:var(--success)}
+.model-row .miss{background:var(--danger)}
+.model-row code{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.model-row .st{font-size:11px;color:var(--tertiary);flex:none}
+.danger-zone{border:1px solid rgba(251,113,133,.4);border-radius:var(--r-md);padding:16px;margin-top:14px;background:rgba(251,113,133,.04)}
+.danger-zone b{display:block;font-size:13px;color:var(--danger);margin-bottom:4px}
+.danger-zone p{font-size:12px;color:var(--muted);margin-bottom:12px}
+.hold-btn{
+  position:relative;display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:var(--r-md);
+  border:1px solid rgba(251,113,133,.5);color:var(--danger);font-size:13px;font-weight:600;
+  transition:background 180ms var(--ease);user-select:none;-webkit-user-select:none;touch-action:none;
+}
+.hold-btn:hover{background:rgba(251,113,133,.08)}
+.hold-btn svg{width:26px;height:26px;transform:rotate(-90deg)}
+.hold-btn circle{fill:none;stroke-width:2.5}
+.hold-btn .ring-bg{stroke:rgba(251,113,133,.2)}
+.hold-btn .ring-fg{stroke:var(--danger);stroke-dasharray:69.1;stroke-dashoffset:69.1;transition:stroke-dashoffset 120ms linear}
+.hold-btn.done{border-color:var(--success);color:var(--success);pointer-events:none}
+.hold-hint{font-size:11px;color:var(--tertiary);margin-top:8px}
+.priv-side{position:sticky;top:20px}
+.priv-map{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.priv-map-row{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted)}
+.priv-map-row svg{width:15px;height:15px;color:var(--success);flex:none;margin-top:2px}
+.check-flash{
+  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--success);
+  opacity:0;transition:opacity 200ms var(--ease);
+}
+.check-flash.show{opacity:1}
+.save-note{font-size:11.5px;color:var(--tertiary);margin-top:10px;display:flex;align-items:center;gap:8px}
+
+/* ---------- ORB SECTION ---------- */
+.orb-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch}
+.orb-stage{
+  position:relative;border-radius:var(--r-xl);border:1px solid var(--glass-border);
+  background:radial-gradient(420px 300px at 50% 42%,rgba(139,124,255,.08),transparent 70%),var(--surface);
+  min-height:460px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  box-shadow:var(--sh-glass);
+}
+.orb-stage::after{
+  content:"96 × 96 px · always-on-top";position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  font-family:var(--font-mono);font-size:11px;color:var(--tertiary);letter-spacing:.08em;
+}
+.orb{
+  --orb:#8B7CFF; --orb-dim:#4a3fb0; --orbit-r:78px;
+  position:relative;width:200px;height:200px;
+}
+.orb-stage[data-state="listening"] .orb{--orb:#22D3EE;--orb-dim:#0e6d80;--orbit-r:62px}
+.orb-stage[data-state="thinking"] .orb{--orb:#C084FC;--orb-dim:#5b21b6;--orbit-r:56px}
+.orb-stage[data-state="speaking"] .orb{--orb:#2DD4BF;--orb-dim:#0f766e;--orbit-r:78px}
+.orb-stage[data-state="sleeping"] .orb{--orb:#3D4358;--orb-dim:#23263a;--orbit-r:70px}
+.orb-nimbus{
+  position:absolute;inset:-28px;border-radius:50%;
+  background:radial-gradient(circle,var(--orb) 0%,transparent 65%);
+  opacity:.3;filter:blur(14px);
+  transition:opacity 400ms var(--ease),background 400ms var(--ease);
+  animation:nimbus 4s ease-in-out infinite;
+}
+.orb-stage[data-state="listening"] .orb-nimbus{opacity:.6;animation-duration:2.5s}
+.orb-stage[data-state="thinking"] .orb-nimbus{animation:nimbusNoise 1.1s steps(2) infinite}
+.orb-stage[data-state="sleeping"] .orb-nimbus{opacity:.12;animation-duration:7s}
+@keyframes nimbus{0%,100%{opacity:.3}50%{opacity:.42}}
+@keyframes nimbusNoise{0%{opacity:.35}30%{opacity:.58}55%{opacity:.42}80%{opacity:.6}100%{opacity:.35}}
+.orb-core{
+  position:absolute;inset:36px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.5) 0%,var(--orb) 38%,var(--orb-dim) 100%);
+  background-color:var(--orb);
+  box-shadow:inset 0 0 32px rgba(255,255,255,.12), inset 0 -8px 24px rgba(0,0,0,.35), 0 0 40px var(--orb);
+  transition:background 400ms var(--ease),box-shadow 400ms var(--ease);
+  animation:coreBreathe 4s ease-in-out infinite;overflow:hidden;
+}
+.orb-stage[data-state="listening"] .orb-core{animation-duration:2.5s}
+.orb-stage[data-state="sleeping"] .orb-core{animation:coreBreathe 7s ease-in-out infinite;box-shadow:inset 0 0 32px rgba(255,255,255,.06), inset 0 -8px 24px rgba(0,0,0,.45), 0 0 14px rgba(61,67,88,.6)}
+@keyframes coreBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.orb-core.blink{animation:none;transform:scale(.96)}
+.orb-vortex{
+  position:absolute;inset:-40%;opacity:0;transition:opacity 400ms var(--ease);
+  background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,.45) 18%,transparent 40%,rgba(139,124,255,.5) 62%,transparent 85%);
+  filter:blur(6px);animation:vortexSpin 6s linear infinite;
+}
+.orb-stage[data-state="thinking"] .orb-vortex{opacity:.85}
+@keyframes vortexSpin{to{transform:rotate(360deg)}}
+.orb-stage[data-state="thinking"] .orb{animation:orbTilt 5s ease-in-out infinite}
+@keyframes orbTilt{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.orb-particles{position:absolute;inset:0;animation:orbitSpin 12s linear infinite}
+.orb-stage[data-state="listening"] .orb-particles{animation-duration:5s}
+.orb-stage[data-state="thinking"] .orb-particles{animation-duration:3s}
+.orb-stage[data-state="sleeping"] .orb-particles{animation-duration:30s}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+.orb-particles i{
+  position:absolute;top:50%;left:50%;width:5px;height:5px;border-radius:50%;
+  background:var(--orb);box-shadow:0 0 8px var(--orb);
+  transition:transform 600ms var(--ease),opacity 600ms var(--ease),background 400ms var(--ease);
+}
+.orb-particles i:nth-child(1){transform:rotate(0deg) translateX(var(--orbit-r))}
+.orb-particles i:nth-child(2){transform:rotate(60deg) translateX(calc(var(--orbit-r) + 8px))}
+.orb-particles i:nth-child(3){transform:rotate(120deg) translateX(var(--orbit-r))}
+.orb-particles i:nth-child(4){transform:rotate(180deg) translateX(calc(var(--orbit-r) - 6px))}
+.orb-particles i:nth-child(5){transform:rotate(240deg) translateX(var(--orbit-r))}
+.orb-particles i:nth-child(6){transform:rotate(300deg) translateX(calc(var(--orbit-r) + 5px))}
+.orb-stage[data-state="sleeping"] .orb-particles i:nth-child(2),
+.orb-stage[data-state="sleeping"] .orb-particles i:nth-child(5){opacity:0}
+.orb-ripples{position:absolute;inset:0;pointer-events:none}
+.orb-ripples i{
+  position:absolute;inset:24px;border-radius:50%;border:1.5px solid var(--orb);
+  opacity:0;transform:scale(1);
+}
+.orb-stage[data-state="speaking"] .orb-ripples i{animation:ripple 1.6s var(--ease) infinite}
+.orb-stage[data-state="speaking"] .orb-ripples i:nth-child(2){animation-delay:.53s}
+.orb-stage[data-state="speaking"] .orb-ripples i:nth-child(3){animation-delay:1.06s}
+@keyframes ripple{0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(1.8)}}
+.orb-waveform{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 400ms var(--ease)}
+.orb-stage[data-state="listening"] .orb-waveform,
+.orb-stage[data-state="speaking"] .orb-waveform{opacity:1}
+.orb-waveform .wb{position:absolute;top:50%;left:50%;width:2.5px;transform-origin:50% 0}
+.orb-waveform .wb i{
+  display:block;width:2.5px;border-radius:2px;background:var(--orb);
+  box-shadow:0 0 6px var(--orb);transition:height 90ms linear;
+}
+.orb-z{position:absolute;top:8px;left:50%;pointer-events:none}
+.orb-z span{
+  position:absolute;left:0;font-family:var(--font-display);font-weight:600;color:var(--muted);
+  opacity:0;font-size:14px;
+}
+.orb-stage[data-state="sleeping"] .orb-z span{animation:zFloat 6s ease-in-out infinite}
+.orb-stage[data-state="sleeping"] .orb-z span:nth-child(2){animation-delay:3s;font-size:11px}
+@keyframes zFloat{
+  0%{opacity:0;transform:translate(0,10px)}
+  15%{opacity:.9}
+  45%{opacity:0;transform:translate(6px,-18px)}
+  100%{opacity:0;transform:translate(6px,-18px)}
+}
+.orb-side{display:flex;flex-direction:column;gap:16px}
+.orb-states{display:flex;flex-wrap:wrap;gap:8px}
+.orb-state-btn{
+  padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:600;
+  background:var(--glass-fill);border:1px solid var(--glass-border);color:var(--muted);
+  transition:all 180ms var(--ease);
+}
+.orb-state-btn:hover{color:var(--text);border-color:var(--glass-hi)}
+.orb-state-btn.active{color:var(--text);border-color:var(--sb,var(--primary));background:color-mix(in srgb,var(--sb,var(--primary)) 14%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--sb,var(--primary)) 30%,transparent)}
+.orb-state-btn[data-state="idle"]{--sb:#8B7CFF}
+.orb-state-btn[data-state="listening"]{--sb:#22D3EE}
+.orb-state-btn[data-state="thinking"]{--sb:#C084FC}
+.orb-state-btn[data-state="speaking"]{--sb:#2DD4BF}
+.orb-state-btn[data-state="sleeping"]{--sb:#6B7288}
+.orb-desc-card{flex:1}
+.orb-desc-card h3{font-size:19px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.orb-desc-card h3 i{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 10px var(--primary);transition:background 400ms,box-shadow 400ms}
+.orb-desc-card p{font-size:13.5px;color:var(--muted);margin-bottom:14px}
+.orb-fact{display:flex;gap:10px;font-size:12.5px;color:var(--muted);padding:9px 0;border-top:1px solid var(--glass-border)}
+.orb-fact svg{width:14px;height:14px;color:var(--primary);flex:none;margin-top:2px}
+.orb-fact b{color:var(--text);font-weight:600}
+.orb-sound{font-family:var(--font-mono);font-size:11.5px;color:var(--tertiary);padding:10px 12px;border-radius:var(--r-sm);background:rgba(0,0,0,.3);border:1px solid var(--glass-border);line-height:1.6}
+
+/* ---------- TOKENS ---------- */
+.tok-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:36px}
+.swatch{border-radius:var(--r-md);overflow:hidden;border:1px solid var(--glass-border);background:var(--surface)}
+.swatch .col{height:64px}
+.swatch .meta{padding:10px 12px}
+.swatch .meta b{display:block;font-size:12px;font-weight:600}
+.swatch .meta span{font-family:var(--font-mono);font-size:11px;color:var(--tertiary)}
+.type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:36px}
+.type-card .sample{margin:12px 0 8px}
+.type-card .t-disp{font-family:var(--font-display);font-size:26px;font-weight:700}
+.type-card .t-body{font-size:15px;color:var(--muted)}
+.type-card .t-mono{font-family:var(--font-mono);font-size:14px;color:var(--cyan)}
+.shadow-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.shadow-card{
+  height:96px;border-radius:var(--r-lg);background:var(--elevated);
+  display:flex;align-items:flex-end;padding:12px;font-family:var(--font-mono);font-size:11px;color:var(--tertiary);
+}
+
+/* ---------- FOOTER ---------- */
+footer{padding:64px 0 48px;text-align:center;color:var(--tertiary);font-size:12.5px}
+footer .f-orb{
+  width:28px;height:28px;border-radius:50%;margin:0 auto 14px;
+  background:radial-gradient(circle at 35% 30%,#A99DFF,#8B7CFF 50%,#4a3fb0);
+  box-shadow:var(--glow-accent);animation:logoBreathe 4s var(--ease) infinite;
+}
+
+/* ---------- REVEAL ---------- */
+.reveal{opacity:0;transform:translateY(12px);transition:opacity 400ms var(--ease),transform 400ms var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:960px){
+  .dash{grid-template-columns:1fr}
+  .rail{flex-direction:row;align-items:center;overflow-x:auto;border-right:none;border-bottom:1px solid var(--glass-border);padding:10px 12px}
+  .rail-logo{padding:0 10px 0 0}
+  .rail-logo small,.rail-tab kbd{display:none}
+  .rail-tab{width:auto;white-space:nowrap}
+  .rail-foot{margin:0 0 0 auto;padding:0}
+  .m-ram,.m-mission{grid-column:span 6}
+  .m-frust{grid-column:span 12}
+  .row2{grid-template-columns:1fr}
+  .settings-grid{grid-template-columns:1fr}
+  .priv-side{position:static}
+  .orb-layout{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .m-ram,.m-mission,.m-frust{grid-column:span 12}
+  .persona-grid,.priv-grid{grid-template-columns:1fr}
+  .search{margin-left:0;width:100%}
+  .step-name{display:none}
+}
+
+/* ---------- REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:100ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<header class="hero wrap">
+  <span class="hero-eyebrow"><i></i>Дизайн-макет · интерактивный</span>
+  <h1>Archie Desktop<br>дизайн-система</h1>
+  <p>Кликабельный прототип автономного напарника уровня ОС: живой дашборд, плавающий орб-виджет с пятью состояниями и полная палитра токенов. Всё работает прямо в этом файле — трогайте, переключайте, зажимайте.</p>
+  <div class="hero-meta">
+    <span class="hero-chip"><b>5</b>&nbsp;экранов</span>
+    <span class="hero-chip"><b>5</b>&nbsp;состояний орба</span>
+    <span class="hero-chip"><b>WCAG AA</b>&nbsp;контраст</span>
+    <span class="hero-chip"><b>Local-first</b>&nbsp;приватность</span>
+    <span class="hero-chip mono">Ctrl+1…4 — табы</span>
+  </div>
+</header>
+
+<!-- ============ 01 DASHBOARD ============ -->
+<section class="sec wrap" id="dashboard">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Дашборд</h2></div>
+  <p class="sec-sub">Главное окно: rail-навигация, живой график фрустрации S(t), лента событий, онбординг и настройки с hold-to-confirm.</p>
+
+  <div class="window reveal">
+    <div class="window-bar"><i></i><i></i><i></i><span>archie://dashboard — Tauri · 1280×800</span></div>
+    <div class="dash">
+
+      <!-- RAIL -->
+      <nav class="rail" role="tablist" aria-label="Разделы дашборда">
+        <div class="rail-logo">
+          <div class="logo-orb" aria-hidden="true"></div>
+          <div><b>Архи</b><small>напарник · v0.4</small></div>
+        </div>
+        <button class="rail-tab active" role="tab" aria-selected="true" aria-controls="panel-status" data-tab="status" id="tab-status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+          Статус<kbd>⌃1</kbd>
+        </button>
+        <button class="rail-tab" role="tab" aria-selected="false" aria-controls="panel-events" data-tab="events" id="tab-events">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          События<kbd>⌃2</kbd>
+        </button>
+        <button class="rail-tab" role="tab" aria-selected="false" aria-controls="panel-onboarding" data-tab="onboarding" id="tab-onboarding">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5.2 5.6.6-4.2 3.8 1.2 5.5-5-2.9-5 2.9 1.2-5.5L4 8.8l5.6-.6z"/></svg>
+          Онбординг<kbd>⌃3</kbd>
+        </button>
+        <button class="rail-tab" role="tab" aria-selected="false" aria-controls="panel-settings" data-tab="settings" id="tab-settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.06-.4.1-.8.1-1.2z"/></svg>
+          Настройки<kbd>⌃4</kbd>
+        </button>
+        <div class="rail-foot">
+          <div class="privacy-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span>Всё локально</span><i></i>
+          </div>
+        </div>
+      </nav>
+
+      <!-- CONTENT -->
+      <div class="content">
+
+        <!-- ===== STATUS ===== -->
+        <section class="panel" id="panel-status" role="tabpanel" aria-labelledby="tab-status">
+          <div class="panel-head">
+            <div><h2>Архи на связи</h2><div class="sub">Движок работает, контекст обновляется в реальном времени</div></div>
+            <span class="status-pill"><i></i>gRPC · <span id="grpc-ms">12</span> ms</span>
+          </div>
+
+          <div class="metrics">
+            <div class="card m-ram reveal">
+              <div class="card-label">Память движка</div>
+              <div class="card-value mono"><span data-count="412">412</span> <small>МБ RSS</small></div>
+              <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+                <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B7CFF" stop-opacity=".35"/><stop offset="1" stop-color="#8B7CFF" stop-opacity="0"/></linearGradient></defs>
+                <path id="spark-area" fill="url(#sparkGrad)" d=""></path>
+                <path id="spark-line" fill="none" stroke="#8B7CFF" stroke-width="1.5" d=""></path>
+              </svg>
+            </div>
+
+            <div class="card m-mission reveal">
+              <div class="card-label">Текущая миссия</div>
+              <div class="mission-flex">
+                <svg class="mission-ring" width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="Миссия выполнена на 68 процентов">
+                  <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+                  <circle id="mission-arc" cx="38" cy="38" r="32" fill="none" stroke="#8B7CFF" stroke-width="6" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 38 38)" style="transition:stroke-dashoffset 800ms var(--ease)"/>
+                  <text id="mission-pct" x="38" y="42" text-anchor="middle" fill="#F1F3FA" font-family="Unbounded" font-size="15" font-weight="600">0%</text>
+                </svg>
+                <div class="mission-info">
+                  <b>Ночной rebuild памяти</b>
+                  <span>Сжатие эпизодов Tier-2 → Tier-3, профиль предпочтений</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card m-frust reveal">
+              <div class="frust-top">
+                <div>
+                  <div class="card-label">Индекс фрустрации S(t)</div>
+                  <div class="card-value mono" id="frust-value">34</div>
+                </div>
+                <div class="frust-legend">
+                  <span><i style="background:#2DD4BF"></i>спокойствие</span>
+                  <span><i style="background:#8B7CFF"></i>напряжение</span>
+                  <span><i style="background:#FB7185"></i>перегруз</span>
+                </div>
+              </div>
+              <div class="frust-chart">
+                <svg id="frust-svg" viewBox="0 0 560 180" width="100%" height="180" role="img" aria-label="График индекса фрустрации, текущее значение 34 из 100">
+                  <defs>
+                    <linearGradient id="frustLineGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8B7CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
+                    <linearGradient id="frustAreaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B7CFF" stop-opacity=".2"/><stop offset="1" stop-color="#8B7CFF" stop-opacity="0"/></linearGradient>
+                  </defs>
+                  <line x1="0" y1="47" x2="560" y2="47" stroke="#FB7185" stroke-opacity=".35" stroke-dasharray="4 5" stroke-width="1"/>
+                  <text x="552" y="40" text-anchor="end" fill="#FB7185" fill-opacity=".7" font-family="JetBrains Mono" font-size="10">полураспад · 70</text>
+                  <line x1="0" y1="150" x2="560" y2="150" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+                  <line x1="0" y1="98" x2="560" y2="98" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+                  <path id="frust-area" fill="url(#frustAreaGrad)" d=""></path>
+                  <path id="frust-line" fill="none" stroke="url(#frustLineGrad)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""></path>
+                  <circle id="frust-dot" r="4.5" fill="#2DD4BF" stroke="#07080F" stroke-width="2" cx="0" cy="0"></circle>
+                </svg>
+                <div id="frust-tip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="card reveal">
+              <div class="card-label">Сейчас</div>
+              <div class="now-reply">«Заметил, что ты третий раз возвращаешься к этому багу. Хочешь, соберу логи за последний час и предложу гипотезу?»</div>
+              <div class="now-meta">
+                <button class="btn btn-primary magnetic" id="btn-replay">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+                  Повторить голосом
+                </button>
+                <span class="mono" style="font-size:11.5px;color:var(--tertiary)">ruslan · piper · 22050 Hz</span>
+              </div>
+            </div>
+            <div class="card reveal">
+              <div class="card-label">Z-Sense · контекст экрана</div>
+              <div class="zsense-shot" aria-hidden="true">
+                <span class="zs-line" style="top:12%"></span>
+                <span class="zs-line" style="top:24%;right:30%"></span>
+                <span class="zs-line" style="top:36%;right:55%"></span>
+                <span class="zs-line" style="top:70%;right:20%"></span>
+                <span class="zs-line" style="top:82%;right:48%"></span>
+                <span class="zs-box" style="top:44%;left:8%;width:46%;height:18%"><em>stack trace · rust</em></span>
+                <span class="zs-box" style="top:60%;left:62%;width:30%;height:12%"><em>терминал</em></span>
+              </div>
+              <div class="zsense-cap"><span>OCR-зоны: 2 активны</span><span class="mono">обновлено 0.4с назад</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== EVENTS ===== -->
+        <section class="panel" id="panel-events" role="tabpanel" aria-labelledby="tab-events" hidden>
+          <div class="panel-head">
+            <div><h2>Лента событий</h2><div class="sub">Всё, что видит и слышит Архи, — с деталями по клику</div></div>
+            <span class="live-dot"><i></i>LIVE</span>
+          </div>
+          <div class="filter-bar" role="group" aria-label="Фильтры событий">
+            <button class="chip active" data-filter="all"><i style="background:#8B7CFF"></i>Все</button>
+            <button class="chip" data-filter="voice"><i style="background:#8B7CFF"></i>Голос</button>
+            <button class="chip" data-filter="zsense"><i style="background:#22D3EE"></i>Z-Sense</button>
+            <button class="chip" data-filter="memory"><i style="background:#2DD4BF"></i>Память</button>
+            <button class="chip" data-filter="system"><i style="background:#6B7288"></i>Система</button>
+            <button class="chip" data-filter="error"><i style="background:#FB7185"></i>Ошибки</button>
+            <label class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <input id="event-search" type="text" placeholder="поиск по ленте…" aria-label="Поиск по событиям">
+            </label>
+          </div>
+          <div class="event-list" id="event-list" role="log" aria-live="polite" aria-label="Лента событий"></div>
+          <div class="events-empty" id="events-empty" hidden>Ничего не найдено — попробуйте другой фильтр.</div>
+        </section>
+
+        <!-- ===== ONBOARDING ===== -->
+        <section class="panel" id="panel-onboarding" role="tabpanel" aria-labelledby="tab-onboarding" hidden>
+          <div class="panel-head">
+            <div><h2>Первое знакомство</h2><div class="sub">Четыре шага — и Архи полностью ваш</div></div>
+          </div>
+          <div class="onb-wrap">
+            <div class="onb-progress" aria-hidden="true"><i id="onb-progress"></i></div>
+            <div class="stepper" id="stepper"></div>
+            <div class="step-card" id="step-card"></div>
+          </div>
+        </section>
+
+        <!-- ===== SETTINGS ===== -->
+        <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+          <div class="panel-head">
+            <div><h2>Настройки</h2><div class="sub">Голос, память, модели и границы приватности</div></div>
+          </div>
+          <div class="settings-grid">
+            <div>
+              <div class="card set-sec">
+                <h3>Голос и речь</h3>
+                <div class="set-row">
+                  <div class="set-info"><b>Голос синтеза</b><span>Piper, локальный TTS</span></div>
+                  <select class="sel" aria-label="Голос синтеза">
+                    <option selected>ruslan (мужской)</option>
+                    <option>irina (женский)</option>
+                    <option>dmitri (мужской, низкий)</option>
+                  </select>
+                </div>
+                <div class="set-row">
+                  <div class="set-info"><b>Скорость речи</b><span>От медленной до деловой</span></div>
+                  <input class="slider" type="range" min="60" max="160" value="105" id="speed-slider" aria-label="Скорость речи">
+                  <span class="slider-val mono" id="speed-val">1.05×</span>
+                </div>
+                <div class="set-row">
+                  <div class="set-info"><b>Barge-in</b><span>Перебивайте Архи голосом — он замолчит мгновенно</span></div>
+                  <button class="toggle" role="switch" aria-checked="true" aria-label="Barge-in"></button>
+                </div>
+                <div class="set-row">
+                  <div class="set-info"><b>Звуки интерфейса</b><span>Тихие подтверждения, не громче −14 дБ</span></div>
+                  <button class="toggle" role="switch" aria-checked="true" aria-label="Звуки интерфейса"></button>
+                </div>
+              </div>
+
+              <div class="card set-sec">
+                <h3>Память</h3>
+                <div class="tier-grid">
+                  <div class="tier"><b>1 248</b><span>Tier-1 · сессия</span></div>
+                  <div class="tier"><b>312</b><span>Tier-2 · эпизоды</span></div>
+                  <div class="tier"><b>47</b><span>Tier-3 · профиль</span></div>
+                </div>
+                <div class="set-row">
+                  <div class="set-info"><b>Ночной rebuild</b><span>Последний: сегодня в 03:12, занял 41 с</span></div>
+                  <button class="btn btn-ghost" id="btn-rebuild">Пересобрать профиль</button>
+                </div>
+                <div class="danger-zone">
+                  <b>Опасная зона</b>
+                  <p>Стирание необратимо: все три уровня памяти, профиль и эпизоды. Удерживайте кнопку 1,5 секунды.</p>
+                  <button class="hold-btn" id="btn-erase">
+                    <svg viewBox="0 0 26 26" aria-hidden="true">
+                      <circle class="ring-bg" cx="13" cy="13" r="11"></circle>
+                      <circle class="ring-fg" id="erase-ring" cx="13" cy="13" r="11"></circle>
+                    </svg>
+                    <span id="erase-label">Стереть всю память</span>
+                  </button>
+                  <div class="hold-hint">Hold-to-confirm · отпустите — действие отменится</div>
+                </div>
+              </div>
+
+              <div class="card set-sec">
+                <h3>Модели</h3>
+                <div class="model-row"><i class="ok"></i><code>models/qwen2.5-3b-instruct-q4.gguf</code><span class="st">загружена · 2.1 ГБ</span></div>
+                <div class="model-row"><i class="ok"></i><code>models/whisper-small-ru.bin</code><span class="st">загружена · 466 МБ</span></div>
+                <div class="model-row"><i class="ok"></i><code>voices/ruslan-medium.onnx</code><span class="st">активен</span></div>
+                <div class="model-row"><i class="miss"></i><code>models/vad-silero-v5.onnx</code><span class="st" style="color:var(--danger)">не найдена</span></div>
+              </div>
+            </div>
+
+            <div class="priv-side">
+              <div class="card">
+                <h3 style="font-size:15px;font-family:var(--font-body);font-weight:700;margin-bottom:4px">Приватность</h3>
+                <p style="font-size:12.5px;color:var(--muted)">Что и где хранится — без мелкого шрифта.</p>
+                <div class="priv-map">
+                  <div class="priv-map-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                    <span>Экран, голос и память — только на этом устройстве</span>
+                  </div>
+                  <div class="priv-map-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                    <span>Модели скачиваются один раз и работают офлайн</span>
+                  </div>
+                  <div class="priv-map-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                    <span>Облако — только по явному запросу в диалоге</span>
+                  </div>
+                </div>
+                <div class="set-row" style="margin-top:10px">
+                  <div class="set-info"><b>Анонимная телеметрия</b><span>Выключена по умолчанию</span></div>
+                  <button class="toggle" role="switch" aria-checked="false" aria-label="Анонимная телеметрия" id="telemetry-toggle"></button>
+                </div>
+                <div class="save-note">
+                  <span class="check-flash" id="save-flash">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+                    сохранено
+                  </span>
+                  <span>настройки применяются мгновенно</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 ORB ============ -->
+<section class="sec wrap" id="widget">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Soft Widget — орб</h2></div>
+  <p class="sec-sub">Плавающий always-on-top спутник 96×96 px. Переключайте состояния — орб живёт по сценариям из брифа: дышит, слушает waveform-кольцом, думает вихрем, говорит рябью и спит с z-искрами.</p>
+
+  <div class="orb-layout">
+    <div class="orb-stage reveal" id="orb-stage" data-state="idle">
+      <div class="orb" id="orb" role="img" aria-label="Орб Архи, состояние: покой">
+        <div class="orb-nimbus"></div>
+        <div class="orb-ripples"><i></i><i></i><i></i></div>
+        <div class="orb-waveform" id="orb-waveform"></div>
+        <div class="orb-particles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="orb-core" id="orb-core"><div class="orb-vortex"></div></div>
+        <div class="orb-z"><span>z</span><span>z</span></div>
+      </div>
+    </div>
+
+    <div class="orb-side">
+      <div class="orb-states reveal" role="group" aria-label="Состояния орба">
+        <button class="orb-state-btn active" data-state="idle" aria-pressed="true">Покой</button>
+        <button class="orb-state-btn" data-state="listening" aria-pressed="false">Слушает</button>
+        <button class="orb-state-btn" data-state="thinking" aria-pressed="false">Думает</button>
+        <button class="orb-state-btn" data-state="speaking" aria-pressed="false">Говорит</button>
+        <button class="orb-state-btn" data-state="sleeping" aria-pressed="false">Спит</button>
+      </div>
+      <div class="card orb-desc-card reveal">
+        <h3><i id="orb-dot"></i><span id="orb-state-name">Покой</span></h3>
+        <p id="orb-state-desc">Ядро мягкого ириса с тёплым свечением, нimbus на 30%, шесть частиц лениво дрейфуют по орбитам. Архи рядом, но не лезет.</p>
+        <div class="orb-fact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+          <span><b>Анимация:</b> <span id="orb-state-anim">дыхание 1.00↔1.06 за 4 с, частицы — оборот за 12 с, раз в 20–40 с случайный «морг».</span></span>
+        </div>
+        <div class="orb-fact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+          <span><b>Звук:</b></span>
+        </div>
+        <div class="orb-sound" id="orb-state-sound">беззвучно · только при первом появлении — тёплый swell 250 мс −20 дБ</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 TOKENS ============ -->
+<section class="sec wrap" id="tokens">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Токены</h2></div>
+  <p class="sec-sub">Фундамент системы: палитра без единого тёплого пикселя, три шрифтовых голоса и лесенка теней.</p>
+
+  <h3 style="font-size:14px;font-family:var(--font-body);font-weight:700;margin-bottom:14px;color:var(--muted)">Палитра</h3>
+  <div class="tok-grid" id="palette"></div>
+
+  <h3 style="font-size:14px;font-family:var(--font-body);font-weight:700;margin-bottom:14px;color:var(--muted)">Типографика</h3>
+  <div class="type-grid">
+    <div class="card type-card reveal">
+      <div class="card-label">Display · Unbounded 600/700</div>
+      <div class="sample t-disp">Архи на связи</div>
+      <div class="t-body">Заголовки экранов, числа-метрики, слово «Архи». Футуристичный характер под персону «Старший Брат».</div>
+    </div>
+    <div class="card type-card reveal">
+      <div class="card-label">Body · Manrope 400–700</div>
+      <div class="sample" style="font-size:17px;font-weight:600">Спокойно, я уже разобрался.</div>
+      <div class="t-body">Весь UI-текст: читаемость на тёмном, межбуквенный 0.01em для мелких кеглей.</div>
+    </div>
+    <div class="card type-card reveal">
+      <div class="card-label">Mono · JetBrains Mono 400/500</div>
+      <div class="sample t-mono">S(t)=34 · 412MB · 12ms</div>
+      <div class="t-body">Логи, таймкоды, ID сессий. Табличные цифры tnum — ширина не прыгает.</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:14px;font-family:var(--font-body);font-weight:700;margin-bottom:14px;color:var(--muted)">Тени и свечение</h3>
+  <div class="shadow-grid">
+    <div class="shadow-card reveal" style="box-shadow:var(--sh-sm)">shadow.sm</div>
+    <div class="shadow-card reveal" style="box-shadow:var(--sh-md)">shadow.md</div>
+    <div class="shadow-card reveal" style="box-shadow:var(--sh-lg)">shadow.lg</div>
+    <div class="shadow-card reveal" style="box-shadow:var(--sh-glass)">glass</div>
+    <div class="shadow-card reveal" style="box-shadow:var(--glow-accent)">glow.accent</div>
+    <div class="shadow-card reveal" style="box-shadow:var(--glow-cyan)">glow.cyan</div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="f-orb"></div>
+  Archie Desktop · дизайн-система v1 · ирис + циан, ни грамма оранжевого<br>
+  <span class="mono" style="font-size:11px">Unbounded / Manrope / JetBrains Mono · WCAG AA · prefers-reduced-motion</span>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------- Tabs ---------- */
+const TAB_ORDER = ['status','events','onboarding','settings'];
+const tabs = $$('.rail-tab');
+function selectTab(name){
+  tabs.forEach(t=>{
+    const on = t.dataset.tab===name;
+    t.classList.toggle('active',on);
+    t.setAttribute('aria-selected',on);
+  });
+  $$('.panel').forEach(p=>{ p.hidden = p.id!=='panel-'+name; });
+  if(name==='status') setTimeout(animateMission,80);
+}
+tabs.forEach(t=>t.addEventListener('click',()=>selectTab(t.dataset.tab)));
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey && ['1','2','3','4'].includes(e.key)){
+    e.preventDefault(); selectTab(TAB_ORDER[+e.key-1]);
+  }
+});
+
+/* ---------- Reveal ---------- */
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target);} });
+},{threshold:.12});
+$$('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- Count-up ---------- */
+function countUp(el,to){
+  if(REDUCED){ el.textContent = to; return; }
+  const t0 = performance.now(), dur=600;
+  (function tick(t){
+    const k = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-k,3);
+    el.textContent = Math.round(to*e);
+    if(k<1) requestAnimationFrame(tick);
+  })(t0);
+}
+$$('[data-count]').forEach(el=>{
+  const io2 = new IntersectionObserver(en=>{
+    if(en[0].isIntersecting){ countUp(el,+el.dataset.count); io2.disconnect(); }
+  },{threshold:.4});
+  io2.observe(el);
+});
+
+/* ---------- gRPC latency ---------- */
+setInterval(()=>{ $('#grpc-ms').textContent = 9+Math.floor(Math.random()*9); },3000);
+
+/* ---------- RAM sparkline ---------- */
+const sparkVals = Array.from({length:24},()=>380+Math.random()*70);
+function sparkRender(){
+  const W=120,H=36,pts = sparkVals.map((v,i)=>[i/(sparkVals.length-1)*W, H-3-(v-360)/140*(H-8)]);
+  const line = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  $('#spark-line').setAttribute('d',line);
+  $('#spark-area').setAttribute('d',line+' L'+W+' '+H+' L0 '+H+' Z');
+}
+sparkRender();
+setInterval(()=>{
+  sparkVals.shift(); sparkVals.push(380+Math.random()*70); sparkRender();
+  const el = document.querySelector('[data-count]'); if(el) el.textContent = Math.round(sparkVals[sparkVals.length-1]);
+},2400);
+
+/* ---------- Mission ring ---------- */
+let missionDone=false;
+function animateMission(){
+  if(missionDone) return; missionDone=true;
+  const arc=$('#mission-arc'), pct=$('#mission-pct'), C=201, target=68;
+  if(REDUCED){ arc.style.strokeDashoffset=C*(1-target/100); pct.textContent=target+'%'; return; }
+  const t0=performance.now();
+  (function tick(t){
+    const k=Math.min(1,(t-t0)/900), e=1-Math.pow(1-k,3);
+    arc.style.strokeDashoffset = C*(1-target/100*e);
+    pct.textContent = Math.round(target*e)+'%';
+    if(k<1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ---------- Frustration chart ---------- */
+const FW=560, FH=180, FN=42;
+let fVal=34;
+const fData=[];
+for(let i=0;i<FN;i++){ fVal=Math.max(6,Math.min(88,fVal+(Math.random()-.5)*14)); fData.push(Math.round(fVal)); }
+function fY(v){ return FH-14-(v/100)*(FH-40); }
+function frustColor(v){ return v<35?'#2DD4BF':(v<70?'#8B7CFF':'#FB7185'); }
+function frustRender(){
+  const pts = fData.map((v,i)=>[i/(FN-1)*FW, fY(v)]);
+  const line = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  $('#frust-line').setAttribute('d',line);
+  $('#frust-area').setAttribute('d',line+' L'+FW+' '+FH+' L0 '+FH+' Z');
+  const last = pts[pts.length-1], v = fData[fData.length-1];
+  const dot = $('#frust-dot');
+  dot.setAttribute('cx',last[0]); dot.setAttribute('cy',last[1]); dot.setAttribute('fill',frustColor(v));
+  const valEl = $('#frust-value'); valEl.textContent=v; valEl.style.color=frustColor(v);
+  $('#frust-svg').setAttribute('aria-label','График индекса фрустрации, текущее значение '+v+' из 100');
+}
+frustRender();
+setInterval(()=>{
+  fVal = Math.max(6,Math.min(88,fVal+(Math.random()-.48)*11));
+  fData.shift(); fData.push(Math.round(fVal)); frustRender();
+},1500);
+/* tooltip */
+const fSvg=$('#frust-svg'), fTip=$('#frust-tip');
+fSvg.addEventListener('mousemove',e=>{
+  const r=fSvg.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width*FW;
+  const idx=Math.max(0,Math.min(FN-1,Math.round(x/FW*(FN-1))));
+  const v=fData[idx];
+  fTip.style.opacity=1;
+  fTip.style.left=(idx/(FN-1)*100)+'%';
+  fTip.style.top=(fY(v)/FH*100)+'%';
+  const ago=(FN-1-idx)*1.5;
+  fTip.textContent='S(t)='+v+' · '+(ago===0?'сейчас':ago.toFixed(1).replace('.0','')+' с назад');
+});
+fSvg.addEventListener('mouseleave',()=>{ fTip.style.opacity=0; });
+
+/* ---------- Events ---------- */
+const EVENT_LABEL={voice:'Голос',zsense:'Z-Sense',memory:'Память',system:'Система',error:'Ошибка'};
+function evTime(minAgo){
+  const d=new Date(Date.now()-minAgo*60000);
+  return [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+}
+const EVENTS=[
+ {type:'voice', t:0.4, text:'Распознана команда: «Архи, что я сейчас делаю не так»', payload:'{ "stt": "whisper-small-ru",\n  "confidence": 0.94,\n  "duration_ms": 2100,\n  "wake_word": true }'},
+ {type:'zsense', t:1.2, text:'Экранный контекст: редактор кода, открыт stack trace (rust)', payload:'{ "ocr_zones": 2,\n  "app": "code.exe",\n  "keywords": ["panic", "unwrap", "borrow"] }'},
+ {type:'memory', t:3, text:'Эпизод сохранён в Tier-1: обсуждение архитектуры плагинов', payload:'{ "tier": 1,\n  "episode_id": "ep_7f3a",\n  "embedding": "bge-m3 · 1024d" }'},
+ {type:'system', t:6, text:'Движок перезапущен по расписанию, холодный старт 1.8 с', payload:'{ "uptime_s": 14400,\n  "restart": "scheduled",\n  "cold_start_ms": 1810 }'},
+ {type:'voice', t:9, text:'Barge-in: пользователь перебил реплику, TTS остановлен за 80 мс', payload:'{ "event": "barge_in",\n  "tts_fade_ms": 80,\n  "orb_flash": "cyan 120ms" }'},
+ {type:'error', t:14, text:'VAD-модель не найдена, используется энергетический детектор', payload:'{ "path": "models/vad-silero-v5.onnx",\n  "fallback": "energy_vad",\n  "severity": "warn" }'},
+ {type:'memory', t:22, text:'Ночной rebuild: 312 эпизодов сжаты до 47 строк профиля', payload:'{ "tier2_in": 312,\n  "tier3_out": 47,\n  "duration_s": 41 }'},
+ {type:'zsense', t:31, text:'Индекс фрустрации вырос до 58: повторные возвраты к одному файлу', payload:'{ "s_t": 58,\n  "signal": "file_revisit x3",\n  "action": "proactive_hint_queued" }'}
+];
+const POOL=[
+ {type:'voice', text:'Команда распознана: «открой вчерашние заметки»', payload:'{ "stt": "whisper-small-ru",\n  "confidence": 0.91 }'},
+ {type:'zsense', text:'Экранный контекст обновлён: браузер, документация по API', payload:'{ "ocr_zones": 3,\n  "app": "browser",\n  "keywords": ["api","auth"] }'},
+ {type:'memory', text:'Профиль дополнен: предпочтение тёмной темы и тихих звуков', payload:'{ "tier": 3,\n  "key": "ui.prefs" }'},
+ {type:'system', text:'Heartbeat движка: все модули в норме', payload:'{ "modules": ["stt","tts","llm","zsense"],\n  "status": "ok" }'},
+ {type:'voice', text:'Ответ синтезирован голосом ruslan, 1.4 с', payload:'{ "tts": "piper ruslan",\n  "duration_ms": 1400 }'}
+];
+const evList=$('#event-list'), evEmpty=$('#events-empty');
+let evFilter='all', evQuery='';
+function evNode(e){
+  const art=document.createElement('article');
+  art.className='event'; art.dataset.type=e.type;
+  art.innerHTML =
+    '<button class="event-head" aria-expanded="false">'+
+      '<span class="event-badge"><i></i>'+EVENT_LABEL[e.type]+'</span>'+
+      '<span class="event-text"></span>'+
+      '<time class="event-time">'+e.time+'</time>'+
+      '<svg class="event-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'+
+    '</button>'+
+    '<div class="event-details"><div><pre></pre></div></div>';
+  art.querySelector('.event-text').textContent=e.text;
+  art.querySelector('pre').textContent=e.payload;
+  art.querySelector('.event-head').addEventListener('click',()=>{
+    const open=art.classList.toggle('open');
+    art.querySelector('.event-head').setAttribute('aria-expanded',open);
+  });
+  return art;
+}
+function evMatches(e){
+  const fOk = evFilter==='all'||e.type===evFilter;
+  const qOk = !evQuery || e.text.toLowerCase().includes(evQuery);
+  return fOk&&qOk;
+}
+function evRenderAll(){
+  evList.innerHTML='';
+  let shown=0;
+  EVENTS.forEach(e=>{ if(evMatches(e)){ evList.appendChild(evNode(e)); shown++; } });
+  evEmpty.hidden = shown>0;
+}
+EVENTS.forEach(e=>{ e.time=evTime(e.t); });
+evRenderAll();
+$$('.chip[data-filter]').forEach(ch=>ch.addEventListener('click',()=>{
+  $$('.chip[data-filter]').forEach(c=>c.classList.remove('active'));
+  ch.classList.add('active');
+  evFilter=ch.dataset.filter;
+  evRenderAll();
+}));
+$('#event-search').addEventListener('input',e=>{ evQuery=e.target.value.trim().toLowerCase(); evRenderAll(); });
+setInterval(()=>{
+  if(document.hidden) return;
+  const src=POOL[Math.floor(Math.random()*POOL.length)];
+  const e={type:src.type,text:src.text,payload:src.payload,time:evTime(0)};
+  EVENTS.unshift(e);
+  EVENTS.forEach((ev,i)=>{ if(i>0) ev.time=evTime(ev.t+0); });
+  if(EVENTS.length>24) EVENTS.pop();
+  evRenderAll();
+  const first=evList.firstElementChild;
+  if(first && !REDUCED){ first.classList.add('enter','flash'); }
+},6000);
+
+/* ---------- Onboarding ---------- */
+const STEP_META=[
+ {name:'Голос', title:'Голос и микрофон', desc:'Скажите пару фраз — Архи подстроит чувствительность и проверит, что слышит вас чисто.'},
+ {name:'Экран', title:'Глаза Архи — Z-Sense', desc:'Доступ к экрану нужен, чтобы понимать контекст: что вы читаете, где застряли. Всё распознаётся локально.'},
+ {name:'Персона', title:'Характер напарника', desc:'Тон можно сменить в любой момент. Выберите, с чего начнёте.'},
+ {name:'Приватность', title:'Границы приватности', desc:'По умолчанию всё остаётся на устройстве. Облако — только если вы сами попросите в диалоге.'}
+];
+let stepIdx=0;
+const stepper=$('#stepper'), stepCard=$('#step-card');
+STEP_META.forEach((s,i)=>{
+  const d=document.createElement('div');
+  d.className='step-item'+(i===0?' active':'');
+  d.innerHTML='<span class="step-dot"></span><span class="step-name">'+s.name+'</span>';
+  stepper.appendChild(d);
+});
+const VU_BARS=16;
+let vuTimer=null;
+function vuStart(){
+  const vu=$('#vu-meter'); if(!vu) return;
+  clearInterval(vuTimer);
+  vu.classList.add('on');
+  vuTimer=setInterval(()=>{
+    Array.from(vu.children).forEach(b=>{
+      b.style.height=(8+Math.random()*88)+'%';
+    });
+  },REDUCED?400:120);
+}
+function stepBody(i){
+  if(i===0){
+    return '<div class="step-orb"></div><h3>'+STEP_META[0].title+'</h3><p class="step-desc">'+STEP_META[0].desc+'</p>'+
+      '<div class="vu" id="vu-meter" aria-hidden="true">'+Array.from({length:VU_BARS},()=>'<i style="height:8%"></i>').join('')+'</div>'+
+      '<div class="step-actions">'+
+        '<button class="btn btn-ghost" id="btn-mic">Проверить микрофон</button>'+
+        '<span class="spacer"></span><span class="step-skip" data-skip>Микрофона нет — пропустить</span>'+
+        '<button class="btn btn-primary magnetic" data-next>Дальше</button>'+
+      '</div>';
+  }
+  if(i===1){
+    return '<div class="step-orb" style="background:radial-gradient(circle at 35% 30%,#7de8f7 0%,#22D3EE 45%,#0e6d80 100%);box-shadow:var(--glow-cyan),inset 0 0 16px rgba(255,255,255,.2)"></div><h3>'+STEP_META[1].title+'</h3><p class="step-desc">'+STEP_META[1].desc+'</p>'+
+      '<div class="zsense-shot" aria-hidden="true"><span class="zs-line" style="top:16%"></span><span class="zs-line" style="top:32%;right:40%"></span><span class="zs-line" style="top:64%;right:25%"></span><span class="zs-box" style="top:40%;left:10%;width:52%;height:16%"><em>так Архи видит экран</em></span></div>'+
+      '<div class="step-actions" style="margin-top:18px">'+
+        '<span class="step-skip" data-skip>Отказаться — «без глаз буду только слушать»</span>'+
+        '<span class="spacer"></span>'+
+        '<button class="btn btn-primary magnetic" data-next>Разрешить доступ</button>'+
+      '</div>';
+  }
+  if(i===2){
+    return '<div class="step-orb" style="background:radial-gradient(circle at 35% 30%,#d8b4fe 0%,#C084FC 45%,#5b21b6 100%)"></div><h3>'+STEP_META[2].title+'</h3><p class="step-desc">'+STEP_META[2].desc+'</p>'+
+      '<div class="persona-grid">'+
+        '<button class="persona sel"><b>Спокойный</b><span>«Я рядом. Давай разберёмся без спешки.»</span></button>'+
+        '<button class="persona"><b>Деловой</b><span>«Три задачи к дедлайну. Начнём с критичной.»</span></button>'+
+        '<button class="persona"><b>Дерзкий</b><span>«Опять продакшн в пятницу? Смело. Погнали.»</span></button>'+
+      '</div>'+
+      '<div class="step-actions"><span class="spacer"></span><button class="btn btn-primary magnetic" data-next>Дальше</button></div>';
+  }
+  return '<div class="step-orb" style="background:radial-gradient(circle at 35% 30%,#7ef0dd 0%,#2DD4BF 45%,#0f766e 100%)"></div><h3>'+STEP_META[3].title+'</h3><p class="step-desc">'+STEP_META[3].desc+'</p>'+
+    '<div class="priv-grid">'+
+      '<button class="priv-card sel"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Только локально</b><span>Экран, голос, память — на этом устройстве. Рекомендуем.</span></button>'+
+      '<button class="priv-card"><b>Облако по запросу</b><span>Можно попросить Архи свериться с облачной моделью — явно, в диалоге.</span></button>'+
+    '</div>'+
+    '<div class="step-actions"><span class="spacer"></span><button class="btn btn-primary magnetic" id="btn-finish">Завершить настройку</button></div>';
+}
+function renderStep(){
+  stepCard.innerHTML=stepBody(stepIdx);
+  $('#onb-progress').style.width=((stepIdx+1)/STEP_META.length*100)+'%';
+  Array.from(stepper.children).forEach((d,i)=>{
+    d.classList.toggle('active',i===stepIdx);
+    d.classList.toggle('done',i<stepIdx);
+  });
+  stepCard.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{
+    if(stepIdx<STEP_META.length-1){ stepIdx++; renderStep(); }
+  }));
+  stepCard.querySelectorAll('[data-skip]').forEach(b=>b.addEventListener('click',()=>{
+    if(stepIdx<STEP_META.length-1){ stepIdx++; renderStep(); }
+  }));
+  stepCard.querySelectorAll('.persona').forEach(p=>p.addEventListener('click',()=>{
+    stepCard.querySelectorAll('.persona').forEach(x=>x.classList.remove('sel'));
+    p.classList.add('sel');
+  }));
+  stepCard.querySelectorAll('.priv-card').forEach(p=>p.addEventListener('click',()=>{
+    stepCard.querySelectorAll('.priv-card').forEach(x=>x.classList.remove('sel'));
+    p.classList.add('sel');
+  }));
+  const mic=$('#btn-mic');
+  if(mic) mic.addEventListener('click',()=>{
+    mic.textContent='Слушаю… говорите'; mic.disabled=true; vuStart();
+    setTimeout(()=>{ mic.textContent='Микрофон в порядке ✓'; },2600);
+  });
+  const fin=$('#btn-finish');
+  if(fin) fin.addEventListener('click',()=>{
+    fin.textContent='Архи готов ✓'; fin.disabled=true;
+    stepper.children[3].classList.add('done');
+    $('#onb-progress').style.width='100%';
+  });
+  bindMagnetic(stepCard);
+}
+renderStep();
+
+/* ---------- Settings widgets ---------- */
+$$('.toggle').forEach(t=>t.addEventListener('click',()=>{
+  const on=t.getAttribute('aria-checked')==='true';
+  t.setAttribute('aria-checked',String(!on));
+  const flash=$('#save-flash');
+  flash.classList.add('show'); setTimeout(()=>flash.classList.remove('show'),900);
+}));
+const speed=$('#speed-slider');
+function sliderFill(){
+  const k=(speed.value-speed.min)/(speed.max-speed.min)*100;
+  speed.style.background='linear-gradient(to right, var(--primary) '+k+'%, rgba(255,255,255,.12) '+k+'%)';
+  $('#speed-val').textContent=(speed.value/100).toFixed(2)+'×';
+}
+speed.addEventListener('input',sliderFill); sliderFill();
+
+$('#btn-rebuild').addEventListener('click',function(){
+  const b=this; b.disabled=true; b.textContent='Собираю профиль…';
+  setTimeout(()=>{ b.textContent='Готово ✓'; setTimeout(()=>{ b.disabled=false; b.textContent='Пересобрать профиль'; },1600); },2400);
+});
+
+/* hold-to-confirm */
+const hold=$('#btn-erase'), ring=$('#erase-ring'), eraseLabel=$('#erase-label');
+const CIRC=69.1, HOLD_MS=1500;
+let holdStart=0, holdRaf=0, holding=false;
+function holdTick(t){
+  if(!holding) return;
+  const k=Math.min(1,(t-holdStart)/HOLD_MS);
+  ring.style.strokeDashoffset=CIRC*(1-k);
+  if(k>=1){
+    holding=false;
+    hold.classList.add('done');
+    eraseLabel.textContent='Память стёрта';
+    setTimeout(()=>{
+      hold.classList.remove('done');
+      eraseLabel.textContent='Стереть всю память';
+      ring.style.strokeDashoffset=CIRC;
+    },4000);
+    return;
+  }
+  holdRaf=requestAnimationFrame(holdTick);
+}
+function holdBegin(e){
+  if(hold.classList.contains('done')) return;
+  e.preventDefault();
+  holding=true; holdStart=performance.now();
+  ring.style.transition='stroke-dashoffset 120ms linear';
+  holdRaf=requestAnimationFrame(holdTick);
+}
+function holdCancel(){
+  if(!holding) return;
+  holding=false; cancelAnimationFrame(holdRaf);
+  ring.style.transition='stroke-dashoffset 300ms cubic-bezier(.34,1.56,.64,1)';
+  ring.style.strokeDashoffset=CIRC;
+}
+hold.addEventListener('pointerdown',holdBegin);
+hold.addEventListener('pointerup',holdCancel);
+hold.addEventListener('pointerleave',holdCancel);
+hold.addEventListener('keydown',e=>{
+  if((e.key===' '||e.key==='Enter')&&!e.repeat) holdBegin(e);
+});
+hold.addEventListener('keyup',holdCancel);
+
+/* ---------- Orb ---------- */
+const ORB_INFO={
+ idle:{name:'Покой',dot:'#8B7CFF',
+  desc:'Ядро мягкого ириса с тёплым свечением, нimbus на 30%, шесть частиц лениво дрейфуют по орбитам. Архи рядом, но не лезет.',
+  anim:'дыхание 1.00↔1.06 за 4 с, частицы — оборот за 12 с, раз в 20–40 с случайный «морг».',
+  sound:'беззвучно · только при первом появлении — тёплый swell 250 мс −20 дБ'},
+ listening:{name:'Слушает',dot:'#22D3EE',
+  desc:'Ядро переливается в циан, край рябит как вода. Вокруг — waveform-кольцо из 24 столбиков, высота следует за уровнем микрофона. Частицы стягиваются ближе.',
+  anim:'waveform каждый кадр (attack 50 мс / release 200 мс), дыхание 2.5 с, barge-in — сжатие 0.92 и cyan-вспышка 120 мс.',
+  sound:'старт: колокольчик 1568 Гц, 80 мс, −20 дБ · далее тишина — микрофон открыт'},
+ thinking:{name:'Думает',dot:'#C084FC',
+  desc:'Ядро смещается в орхидею, внутри — медленный градиентный вихрь. Частицы выстраиваются в одно кольцо и вращаются синхронно, как спутники.',
+  anim:'вихрь 360° за 6 с, кольцо частиц — за 3 с, свечение мерцает шумом, наклон орба ±3° с периодом 5 с.',
+  sound:'тихий гул-пад 120 Гц, −28 дБ, зациклен · если думает >8 с — мягкий «хм» 200 Гц'},
+ speaking:{name:'Говорит',dot:'#2DD4BF',
+  desc:'Ядро teal, энергичное. Три концентрических ripple-кольца расходятся от ядра, waveform отражает амплитуду речи голоса ruslan.',
+  anim:'ripple 1.0→1.8 за 1.6 с с каскадом 0.53 с, микропульс ядра на ударных слогах (+0.03 на 80 мс).',
+  sound:'голос TTS ruslan — основной звук · при barge-in обрыв с fade 80 мс'},
+ sleeping:{name:'Спит',dot:'#6B7288',
+  desc:'Ядро тусклое серо-синее, свечение почти погашено, две частицы из шести «спят». Раз в 6 секунд над орбом поднимается z-искорка.',
+  anim:'замедленное дыхание 1.00↔1.03 за 7 с, z-искра вверх на 18 px с растворением за 2.5 с.',
+  sound:'засыпание: выдох-свип 400→150 Гц, 600 мс, −22 дБ · во сне — тишина'}
+};
+const stage=$('#orb-stage'), orbEl=$('#orb'), orbDot=$('#orb-dot');
+function setOrbState(s){
+  stage.dataset.state=s;
+  const info=ORB_INFO[s];
+  $('#orb-state-name').textContent=info.name;
+  $('#orb-state-desc').textContent=info.desc;
+  $('#orb-state-anim').textContent=info.anim;
+  $('#orb-state-sound').textContent=info.sound;
+  orbDot.style.background=info.dot; orbDot.style.boxShadow='0 0 10px '+info.dot;
+  orbEl.setAttribute('aria-label','Орб Архи, состояние: '+info.name);
+  $$('.orb-state-btn').forEach(b=>{
+    const on=b.dataset.state===s;
+    b.classList.toggle('active',on); b.setAttribute('aria-pressed',on);
+  });
+}
+$$('.orb-state-btn').forEach(b=>b.addEventListener('click',()=>setOrbState(b.dataset.state)));
+
+/* waveform ring */
+const WAVE_N=24, wave=$('#orb-waveform');
+const waveBars=[];
+for(let i=0;i<WAVE_N;i++){
+  const wb=document.createElement('div');
+  wb.className='wb';
+  const ang=(i/WAVE_N)*360;
+  wb.style.transform='rotate('+ang+'deg) translateY(-104px)';
+  wb.innerHTML='<i style="height:4px"></i>';
+  wave.appendChild(wb);
+  waveBars.push(wb.firstChild);
+}
+let phase=0;
+function waveLoop(){
+  const s=stage.dataset.state;
+  const active=(s==='listening'||s==='speaking');
+  phase+=0.09;
+  waveBars.forEach((bar,i)=>{
+    let h=4;
+    if(active){
+      const env=(Math.sin(phase+i*0.55)+1)/2;
+      const speech=Math.max(0,Math.sin(phase*0.7))*0.7+0.3;
+      h=4+env*speech*(s==='speaking'?26:20)*Math.random()*0.9+4*env;
+    }
+    bar.style.height=h.toFixed(1)+'px';
+  });
+  if(!REDUCED) requestAnimationFrame(waveLoop);
+}
+if(!REDUCED) requestAnimationFrame(waveLoop);
+
+/* idle blink */
+if(!REDUCED){
+  (function blink(){
+    const wait=6000+Math.random()*8000;
+    setTimeout(()=>{
+      if(stage.dataset.state==='idle'){
+        const core=$('#orb-core');
+        core.classList.add('blink');
+        setTimeout(()=>core.classList.remove('blink'),150);
+      }
+      blink();
+    },wait);
+  })();
+}
+
+/* replay button -> orb speaks */
+$('#btn-replay').addEventListener('click',()=>{
+  const prev=stage.dataset.state;
+  setOrbState('speaking');
+  document.getElementById('widget').scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'center'});
+  setTimeout(()=>setOrbState(prev==='speaking'?'idle':prev),4200);
+});
+
+/* ---------- Magnetic buttons ---------- */
+function bindMagnetic(scope){
+  if(REDUCED) return;
+  (scope||document).querySelectorAll('.magnetic').forEach(btn=>{
+    if(btn.dataset.mag) return; btn.dataset.mag='1';
+    btn.addEventListener('mousemove',e=>{
+      const r=btn.getBoundingClientRect();
+      const dx=(e.clientX-r.left-r.width/2)/r.width, dy=(e.clientY-r.top-r.height/2)/r.height;
+      btn.style.transform='translate('+(dx*8).toFixed(1)+'px,'+(dy*8).toFixed(1)+'px)';
+    });
+    btn.addEventListener('mouseleave',()=>{
+      btn.style.transition='transform 300ms cubic-bezier(.34,1.56,.64,1)';
+      btn.style.transform='';
+      setTimeout(()=>{ btn.style.transition=''; },320);
+    });
+  });
+}
+bindMagnetic(document);
+
+/* ---------- Palette gallery ---------- */
+const PALETTE=[
+ ['bg.base','#07080F'],['bg.surface','#0D1019'],['bg.elevated','#151929'],
+ ['accent.primary','#8B7CFF'],['accent.hover','#A99DFF'],['accent.secondary','#22D3EE'],
+ ['success','#2DD4BF'],['info','#38BDF8'],['warning','#C084FC'],['danger','#FB7185'],
+ ['frustration.low','#2DD4BF'],['frustration.mid','#8B7CFF'],['frustration.high','#FB7185'],
+ ['orb.listening','#22D3EE'],['orb.thinking','#C084FC'],['orb.speaking','#2DD4BF'],['orb.sleeping','#3D4358'],
+ ['text.primary','#F1F3FA'],['text.secondary','#A6ADC4'],['text.tertiary','#6B7288']
+];
+const pal=$('#palette');
+PALETTE.forEach(([name,hex])=>{
+  const d=document.createElement('div');
+  d.className='swatch reveal';
+  d.innerHTML='<div class="col" style="background:'+hex+'"></div><div class="meta"><b>'+name+'</b><span>'+hex+'</span></div>';
+  pal.appendChild(d);
+  io.observe(d);
+});
+
+/* init orb */
+setOrbState('idle');
+})();
+</script>
+</body>
+</html>
