@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Архитектура Archie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07080F; --surface:#0D1019; --elevated:#151929;
+    --primary:#8B7CFF; --secondary:#22D3EE; --success:#2DD4BF; --danger:#FB7185;
+    --text:#F1F3FA; --muted:#A6ADC4;
+    --canvas:#0a0f1a;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+    --c-ui:#22d3ee; --c-ipc:#60a5fa; --c-engine:#a78bfa;
+    --c-audio:#f472b6; --c-memory:#34d399; --c-external:#94a3b8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif;}
+  body{padding:28px 20px 64px; min-height:100vh;}
+  .wrap{max-width:1720px; margin:0 auto;}
+
+  header.top{display:flex; flex-wrap:wrap; gap:18px 24px; align-items:flex-end; justify-content:space-between; margin-bottom:18px;}
+  h1{font-family:'Unbounded',sans-serif; font-weight:700; font-size:clamp(20px,3vw,32px); letter-spacing:.01em;
+     background:linear-gradient(100deg,var(--secondary),var(--primary) 60%,var(--c-audio));
+     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .sub{color:var(--muted); font-size:14px; margin-top:6px; max-width:640px; line-height:1.5;}
+  .controls{display:flex; gap:10px; flex-wrap:wrap;}
+  button{
+    font-family:'Manrope',sans-serif; font-weight:600; font-size:13.5px; color:var(--text);
+    background:var(--elevated); border:1px solid rgba(139,124,255,.35); border-radius:10px;
+    padding:10px 16px; cursor:pointer; transition:all 180ms var(--ease);
+  }
+  button:hover{border-color:var(--primary); box-shadow:0 0 18px rgba(139,124,255,.35); transform:translateY(-1px);}
+  button:active{transform:translateY(0);}
+  button.playing{border-color:var(--danger); box-shadow:0 0 18px rgba(251,113,133,.4);}
+  button.ghost{border-color:rgba(166,173,196,.25); color:var(--muted);}
+  button.ghost:hover{color:var(--text); border-color:var(--muted); box-shadow:none;}
+
+  #caption{
+    display:flex; align-items:center; gap:14px;
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.5;
+    background:var(--surface); border:1px solid rgba(139,124,255,.25); border-radius:10px;
+    padding:9px 14px; margin-bottom:14px; color:var(--text);
+  }
+  #caption[hidden]{display:none;}
+  #caption .step-no{color:var(--secondary); margin-right:10px; flex:none;}
+  #caption.flash{border-color:rgba(251,113,133,.6); box-shadow:0 0 22px rgba(251,113,133,.25);}
+  #caption .scn-nav{display:flex; gap:4px; flex:none;}
+  #caption .scn-nav button{
+    padding:4px 10px; font-size:11px; line-height:1.2; border-radius:7px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  #caption .scn-dots{display:flex; gap:5px; flex:none; align-items:center;}
+  #caption .scn-dots button{
+    width:22px; height:7px; padding:0; border:none; border-radius:99px;
+    background:rgba(166,173,196,.28); transition:all 220ms var(--ease);
+  }
+  #caption .scn-dots button:hover{background:rgba(166,173,196,.6); box-shadow:none; transform:none;}
+  #caption .scn-dots button.on{background:var(--secondary); box-shadow:0 0 8px rgba(34,211,238,.65);}
+  #caption.flash .scn-dots button.on{background:var(--danger); box-shadow:0 0 8px rgba(251,113,133,.65);}
+
+  .diagram-scroll{overflow-x:auto; border-radius:16px; border:1px solid rgba(166,173,196,.12);
+    background:radial-gradient(1200px 600px at 30% 20%, rgba(139,124,255,.06), transparent 60%),
+               radial-gradient(1000px 500px at 80% 80%, rgba(34,211,238,.05), transparent 60%),
+               var(--canvas);}
+  #diagram{display:block; width:100%; min-width:1180px; height:auto;}
+
+  /* --- minimap --- */
+  #minimap{
+    position:absolute; left:12px; top:12px; z-index:6; width:186px;
+    background:rgba(10,15,26,.9); border:1px solid rgba(139,124,255,.32); border-radius:10px;
+    overflow:hidden; backdrop-filter:blur(6px); box-shadow:0 8px 26px rgba(0,0,0,.45);
+    animation:minifade .6s var(--ease) both .3s;
+  }
+  @keyframes minifade{from{opacity:0; transform:translateY(-8px);} to{opacity:1; transform:none;}}
+  #minimap-svg{display:block; width:100%; height:auto; cursor:crosshair; touch-action:none;}
+  .mm-node{opacity:.9;}
+  .mm-panel{fill:none; stroke-opacity:.28; stroke-width:7;}
+  #mm-view{fill:rgba(139,124,255,.14); stroke:var(--primary); stroke-width:7;}
+
+  /* --- panels --- */
+  .panel{fill-opacity:.07; stroke-opacity:.28; stroke-width:1; stroke-dasharray:5 6;}
+  .panel-label{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; fill:var(--muted); opacity:.85;}
+
+  /* --- nodes --- */
+  .node{cursor:pointer; transition:opacity 400ms var(--ease);}
+  .node rect.card{fill:var(--surface); stroke-width:1.4; transition:all 180ms var(--ease);}
+  .node text{font-family:'Manrope',sans-serif; font-weight:600; font-size:13.5px; fill:var(--text); text-anchor:middle; pointer-events:none;}
+  .node .tag{font-family:'JetBrains Mono',monospace; font-weight:400; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; fill:var(--muted);}
+  .node:hover rect.card{filter:drop-shadow(0 0 14px var(--gc));}
+  .node:focus{outline:none;}
+  .node:focus-visible rect.card{stroke-width:2.4; filter:drop-shadow(0 0 14px var(--gc));}
+
+  /* --- edges --- */
+  .edge{transition:opacity 400ms var(--ease);}
+  .edge path.base{fill:none; stroke-width:1.6; stroke-opacity:.5;}
+  .edge path.flow{fill:none; stroke-width:2; stroke-dasharray:3 9; stroke-opacity:.9;
+    animation:flowmove var(--flow-dur,1.8s) linear infinite;}
+  .edge.dashed path.base{stroke-dasharray:6 6; stroke-opacity:.42;}
+  .edge text{font-family:'JetBrains Mono',monospace; font-size:10px; fill:var(--muted);
+    paint-order:stroke; stroke:var(--canvas); stroke-width:3.5px; opacity:.9;}
+  @keyframes flowmove{to{stroke-dashoffset:-12;}}
+
+  /* --- hover isolation --- */
+  #diagram.hov .node:not(.lit){opacity:.35;}
+  #diagram.hov .edge:not(.lit){opacity:.12;}
+  #diagram.hov .node.lit rect.card{filter:drop-shadow(0 0 14px var(--gc)); stroke-width:2;}
+
+  /* --- legend isolation --- */
+  #diagram.iso .node.iso-dim{opacity:.12;}
+  #diagram.iso .edge.iso-dim{opacity:.08;}
+
+  /* --- scenario --- */
+  #diagram.scn-running .node:not(.scn-on):not(.scn-flash):not(.scn-pro){opacity:.16;}
+  #diagram.scn-running .edge:not(.scn-on):not(.scn-flash):not(.scn-pro){opacity:.12;}
+  .node.scn-on rect.card{filter:drop-shadow(0 0 18px var(--gc)); stroke-width:2.2;}
+  .edge.scn-on path.base{stroke-opacity:1; stroke-width:2.4;}
+  .edge.scn-on text{opacity:1; fill:var(--text);}
+  .edge.scn-mem path.base{stroke-dasharray:2 6;}
+  .node.scn-flash rect.card{stroke:var(--danger)!important; stroke-width:2.4;
+    filter:drop-shadow(0 0 20px rgba(251,113,133,.85)); animation:flashpulse .7s var(--ease) infinite alternate;}
+  .edge.scn-flash path.base{stroke:var(--danger)!important; stroke-opacity:1; stroke-width:2.6;}
+  .edge.scn-flash path.flow{stroke:var(--danger)!important;}
+  .node.scn-pro rect.card{stroke:var(--secondary)!important; stroke-width:2.4;
+    filter:drop-shadow(0 0 20px rgba(34,211,238,.85)); animation:propulse .7s var(--ease) infinite alternate;}
+  .edge.scn-pro path.base{stroke:var(--secondary)!important; stroke-opacity:1; stroke-width:2.6;}
+  .edge.scn-pro path.flow{stroke:var(--secondary)!important;}
+  @keyframes flashpulse{from{filter:drop-shadow(0 0 8px rgba(251,113,133,.5));} to{filter:drop-shadow(0 0 26px rgba(251,113,133,.95));}}
+  @keyframes propulse{from{filter:drop-shadow(0 0 8px rgba(34,211,238,.5));} to{filter:drop-shadow(0 0 26px rgba(34,211,238,.95));}}
+
+  /* --- tooltip --- */
+  #tooltip{
+    position:fixed; z-index:50; max-width:320px; pointer-events:none;
+    background:rgba(13,16,25,.96); border:1px solid rgba(139,124,255,.4); border-radius:12px;
+    padding:12px 14px; font-size:13px; line-height:1.5; color:var(--text);
+    box-shadow:0 8px 32px rgba(0,0,0,.55); opacity:0; transform:translateY(4px);
+    transition:opacity 180ms var(--ease), transform 180ms var(--ease);
+  }
+  #tooltip.show{opacity:1; transform:translateY(0);}
+  #tooltip b{display:block; font-family:'Unbounded',sans-serif; font-weight:500; font-size:13px; margin-bottom:5px;}
+  #tooltip .g{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px;}
+
+  /* --- legend --- */
+  .legend{margin-top:22px; background:var(--surface); border:1px solid rgba(166,173,196,.12); border-radius:16px; padding:18px 20px;}
+  .legend h2{font-family:'Unbounded',sans-serif; font-weight:500; font-size:15px; margin-bottom:14px;}
+  .chips{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px;}
+  .chip{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
+    background:var(--elevated); border:1px solid transparent; font-size:13px; font-weight:600;
+    cursor:pointer; transition:all 180ms var(--ease); user-select:none;
+  }
+  .chip .dot{width:10px; height:10px; border-radius:50%; background:var(--gc); box-shadow:0 0 8px var(--gc);}
+  .chip:hover{border-color:var(--gc);}
+  .chip.active{border-color:var(--gc); box-shadow:0 0 14px color-mix(in srgb, var(--gc) 40%, transparent);}
+  .legend ul{list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:6px 28px;}
+  .legend li{color:var(--muted); font-size:13px; line-height:1.55; padding-left:16px; position:relative;}
+  .legend li::before{content:'—'; position:absolute; left:0; color:var(--primary);}
+
+  /* --- toolbar / search --- */
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px;}
+  .search{position:relative; flex:1 1 260px; max-width:460px;}
+  .search input{
+    width:100%; font-family:'Manrope',sans-serif; font-weight:500; font-size:13.5px; color:var(--text);
+    background:var(--elevated); border:1px solid rgba(139,124,255,.35); border-radius:10px;
+    padding:10px 110px 10px 14px; outline:none; transition:border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+  .search input:focus{border-color:var(--primary); box-shadow:0 0 18px rgba(139,124,255,.3);}
+  .search input::placeholder{color:var(--muted);}
+  .search .count{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--secondary); pointer-events:none;}
+  .flow-ctl{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; color:var(--muted);
+    background:var(--elevated); border:1px solid rgba(139,124,255,.25); border-radius:10px; padding:8px 14px;
+  }
+  .flow-ctl input{accent-color:var(--primary); width:110px; cursor:pointer;}
+  .flow-ctl .val{color:var(--secondary); min-width:34px; text-align:right;}
+
+  /* --- diagram frame --- */
+  .diagram-wrap{position:relative;}
+  .diagram-scroll{cursor:grab; touch-action:none;}
+  .diagram-scroll.panning{cursor:grabbing;}
+  .zoom-controls{position:absolute; right:12px; bottom:12px; display:flex; gap:6px; z-index:5;}
+  .zoom-controls button{padding:7px 13px; font-size:14px; line-height:1; border-radius:9px;
+    background:rgba(21,25,41,.88); backdrop-filter:blur(6px);}
+  .zoom-hint{position:absolute; left:14px; bottom:12px; z-index:5; pointer-events:none;
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--muted); opacity:.75;}
+
+  /* --- search highlight --- */
+  #diagram.searching .node:not(.search-hit){opacity:.18;}
+  #diagram.searching .edge{opacity:.1;}
+  .node.search-hit rect.card{stroke-width:2.4; animation:hitpulse 1.1s var(--ease) infinite alternate;}
+  @keyframes hitpulse{from{filter:drop-shadow(0 0 8px var(--gc));} to{filter:drop-shadow(0 0 26px var(--gc));}}
+
+  /* --- all flows mode --- */
+  #diagram.allflow .edge path.base{stroke-opacity:.9; stroke-width:2;}
+  #diagram.allflow .edge path.flow{stroke-width:3; stroke-opacity:1; animation-duration:calc(var(--flow-dur,1.8s) * .45);}
+  #diagram.allflow .edge text{opacity:1; fill:var(--text);}
+  button.toggled{border-color:var(--secondary); color:var(--secondary); box-shadow:0 0 18px rgba(34,211,238,.35);}
+
+  /* --- inspector --- */
+  #inspector{
+    position:absolute; top:12px; right:12px; z-index:7; width:320px; max-width:calc(100% - 24px);
+    background:rgba(13,16,25,.97); border:1px solid rgba(139,124,255,.4); border-radius:14px;
+    padding:18px 18px 16px; box-shadow:0 14px 44px rgba(0,0,0,.6);
+    animation:inslide .35s var(--ease);
+  }
+  @keyframes inslide{from{opacity:0; transform:translateX(18px);} to{opacity:1; transform:none;}}
+  #inspector[hidden]{display:none;}
+  #inspector h3{font-family:'Unbounded',sans-serif; font-weight:500; font-size:15px; margin-bottom:4px; padding-right:30px;}
+  #inspector .g{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:10px;}
+  #inspector .stats{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  #inspector .stats span{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted);
+    background:var(--elevated); border:1px solid rgba(166,173,196,.16); border-radius:999px; padding:4px 10px;
+  }
+  #inspector .stats b{color:var(--secondary); font-weight:500;}
+  #inspector p{font-size:13px; line-height:1.6; margin-bottom:12px;}
+  #inspector h4{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;}
+  #inspector ul{list-style:none; max-height:180px; overflow:auto;}
+  #inspector li{font-size:12px; color:var(--muted); line-height:1.5; padding:4px 0 4px 16px; position:relative; border-bottom:1px dashed rgba(166,173,196,.14);}
+  #inspector li::before{content:'→'; position:absolute; left:0; color:var(--secondary);}
+  #inspector li.in::before{content:'←'; color:var(--success);}
+  #inspector .close{position:absolute; top:10px; right:10px; padding:4px 11px; font-size:13px; border-radius:8px;}
+
+  @media (max-width:760px){
+    body{padding:18px 12px 48px;}
+    .controls{width:100%;}
+    #minimap{display:none;}
+    #caption{flex-wrap:wrap;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .edge path.flow{animation:none;}
+    .node.scn-flash rect.card{animation:none;}
+    #minimap{animation:none;}
+    *{transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Архитектура Archie</h1>
+      <p class="sub">Интерактивная карта автономного напарника: голосовой тракт с barge-in, Z-Sense, трёхуровневая память и проактивное ядро. Тяните диаграмму, крутите колесо для зума, ищите узлы, кликайте для карточки или проигрывайте сценарии. Миникарта слева сверху — быстрая навигация.</p>
+    </div>
+    <div class="controls">
+      <button id="btn-voice" type="button">▶ Голосовой запрос</button>
+      <button id="btn-night" type="button">🌙 Ночной rebuild</button>
+      <button id="btn-pro" type="button">⚡ Проактивное вмешательство</button>
+      <button id="btn-reset" type="button" class="ghost">Сброс</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search">
+      <input id="node-search" type="search" placeholder="Поиск узла: орб, память, piper…" autocomplete="off" aria-label="Поиск узла по названию">
+      <span class="count" id="search-count"></span>
+    </div>
+    <button id="btn-flow" type="button">≋ Все потоки</button>
+    <label class="flow-ctl" for="flow-speed">скорость потока
+      <input id="flow-speed" type="range" min="0.4" max="3" step="0.1" value="1" aria-label="Скорость анимации потоков">
+      <span class="val" id="flow-speed-val">×1.0</span>
+    </label>
+    <button id="btn-export" type="button" class="ghost">⬇ PNG</button>
+  </div>
+
+  <div id="caption" hidden>
+    <span class="scn-nav">
+      <button id="scn-prev" type="button" aria-label="Предыдущий шаг сценария">◀</button>
+      <button id="scn-auto" type="button" aria-label="Пауза авто-проигрывания">⏸</button>
+      <button id="scn-next" type="button" aria-label="Следующий шаг сценария">▶</button>
+    </span>
+    <span class="step-no"></span><span class="step-text"></span>
+    <span class="scn-dots" id="scn-dots" role="group" aria-label="Шаги сценария"></span>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-scroll">
+      <svg id="diagram" viewBox="0 0 1620 1060" tabindex="0" aria-label="Диаграмма архитектуры Archie: 17 узлов в шести группах. Клавиши + − 0 — зум, Escape — сброс."></svg>
+    </div>
+    <div id="minimap" aria-hidden="true">
+      <svg id="minimap-svg" viewBox="0 0 1620 1060"></svg>
+    </div>
+    <div class="zoom-hint">drag — панорама · колесо — зум · клик — карточка · ← → пробел — шаги сценария · Esc — сброс</div>
+    <div class="zoom-controls">
+      <button id="zoom-out" type="button" aria-label="Уменьшить">−</button>
+      <button id="zoom-reset" type="button" aria-label="Сбросить вид">1:1</button>
+      <button id="zoom-in" type="button" aria-label="Увеличить">+</button>
+    </div>
+    <div id="inspector" hidden></div>
+  </div>
+
+  <section class="legend" aria-label="Легенда диаграммы">
+    <h2>Легенда</h2>
+    <div class="chips" id="chips"></div>
+    <ul>
+      <li>Голубой — UI-слой: орб и дашборд на Tauri/React</li>
+      <li>Синий — gRPC-шина между фронтом и движком</li>
+      <li>Фиолетовый — Engine-ядро: LLM-каскад, Z-Sense, проактивность</li>
+      <li>Розовый — аудио-тракт: VAD → STT → TTS (голос ruslan)</li>
+      <li>Изумрудный — трёхуровневая память: буфер → эпизоды → профиль</li>
+      <li>Серый — внешний мир: облако (opt-in), ОС, экран</li>
+      <li>Пунктирные рёбра — фоновые/ночные процессы и опциональные облачные вызовы</li>
+      <li>Сценарий «Голосовой запрос» подсвечивает путь реплики по всей цепочке, включая barge-in (SYS_TTS_STOP)</li>
+      <li>Во время сценария шаги можно листать вручную: ◀ ▶ в строке подзаголовка или стрелки ← →</li>
+    </ul>
+  </section>
+</div>
+
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+'use strict';
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+const GROUPS = {
+  ui:      {label:'UI-слой (Tauri + React)',   color:'#22d3ee'},
+  ipc:     {label:'IPC-шина',                  color:'#60a5fa'},
+  engine:  {label:'Engine-ядро (Python 3.12)', color:'#a78bfa'},
+  audio:   {label:'Аудио-тракт',               color:'#f472b6'},
+  memory:  {label:'Память (трёхуровневая)',    color:'#34d399'},
+  external:{label:'Внешние сервисы и ОС',      color:'#94a3b8'}
+};
+
+const NODES = [
+  {id:'user',      label:'Пользователь',                 group:'ui',       x:170,  y:150, w:180, h:60,  desc:'Говорит, перебивает (barge-in), работает за экраном. Источник голоса и контекста.'},
+  {id:'orb',       label:'Soft Widget (орб)',            group:'ui',       x:170,  y:380, w:190, h:64,  desc:'Всегда поверх окон. Пульсирует при прослушивании, визуализирует речь, принимает barge-in. Окно отмены перед озвучкой.'},
+  {id:'dashboard', label:'Main Dashboard',               group:'ui',       x:170,  y:610, w:190, h:64,  desc:'Tauri v2 + React/TS. Настройки, история диалогов, статус движка, управление приватностью.'},
+  {id:'grpc',      label:'gRPC IPC',                     group:'ipc',      x:350,  y:380, w:110, h:300, vertical:true, desc:'Двусторонний стрим между фронтом и Python-движком. Команды, события, аудио-фреймы. События: SYS_TTS_SPEAK / SYS_TTS_STOP, NIGHTLY_PROFILE_REBUILD.'},
+  {id:'vad',       label:'VAD silero',                   group:'audio',    x:560,  y:140, w:170, h:56,  desc:'Детектор речи (ONNX). Открывает/закрывает окно записи, ловит перебивание во время TTS.'},
+  {id:'stt',       label:'STT (sherpa-onnx / whisper)',  group:'audio',    x:770,  y:140, w:210, h:56,  desc:'Локальное распознавание речи в текст. Потоковое, без облака.'},
+  {id:'llm',       label:'LLM-каскад',                   group:'engine',   x:990,  y:140, w:170, h:56,  desc:'aijuju cloud (opt-in) → локальная Qwen3-1.7B GGUF → mock-заглушка. Персона «Старший Брат».'},
+  {id:'tts',       label:'TTS Piper (ruslan)',           group:'audio',    x:1210, y:140, w:190, h:56,  desc:'Синтез речи локально, голос ruslan. Динамический URL голоса, отмена по SYS_TTS_STOP.'},
+  {id:'engine',    label:'Python Engine',                group:'engine',   x:880,  y:420, w:200, h:64,  desc:'Ядро оркестрации: маршрутизация аудио, диалоговый цикл, политики приватности local-first.'},
+  {id:'zsense',    label:'Z-Sense',                      group:'engine',   x:660,  y:620, w:180, h:60,  desc:'Зрение Архи: mss-скриншот → RapidOCR → PII-санитайзер. Контекст экрана без утечки персональных данных.'},
+  {id:'proactive', label:'Проактивный движок',           group:'engine',   x:1090, y:620, w:200, h:60,  desc:'hyprctl poll → миссии → индекс фрустрации S(t) с полураспадом. Решает, когда вмешаться.'},
+  {id:'tier1',     label:'Tier-1: буфер',                group:'memory',   x:560,  y:920, w:170, h:56,  desc:'Оперативный контекст сессии в памяти. Мгновенный доступ, живёт до свёртки.'},
+  {id:'tier2',     label:'Tier-2: эпизоды',              group:'memory',   x:770,  y:920, w:190, h:56,  desc:'SQLite + FTS5. Эпизодическая память с полнотекстовым поиском по прошлым диалогам.'},
+  {id:'tier3',     label:'Tier-3: профиль',              group:'memory',   x:990,  y:920, w:180, h:56,  desc:'Долговременный профиль пользователя. Ночной rebuild в 04:00 (NIGHTLY_PROFILE_REBUILD).'},
+  {id:'cloud',     label:'Облачный LLM (aijuju)',        group:'external', x:1450, y:140, w:190, h:60,  desc:'Опционально, только по opt-in. Первый уровень каскада, запросы проходят PII-санитайзер.'},
+  {id:'os',        label:'ОС / Hyprland',                group:'external', x:1450, y:480, w:180, h:56,  desc:'hyprctl: активное окно, воркспейс, фокус. Сырьё для проактивности и Z-Sense.'},
+  {id:'screen',    label:'Экран (mss)',                  group:'external', x:1450, y:700, w:180, h:56,  desc:'Захват кадров экрана для OCR-контекста. Только локально, кадры не покидают машину.'}
+];
+
+const EDGES = [
+  {from:'user',      to:'orb',       label:'голос / barge-in',                 d:'M170,180 C170,240 170,290 170,346'},
+  {from:'orb',       to:'dashboard', label:'состояние, события UI',            d:'M170,412 C170,470 170,520 170,576'},
+  {from:'dashboard', to:'grpc',      label:'команды и подписки',               d:'M265,608 C305,602 312,568 320,528'},
+  {from:'grpc',      to:'engine',    label:'двусторонний стрим',               d:'M405,380 C560,378 660,420 778,420'},
+  {from:'engine',    to:'vad',       label:'аудио-фреймы',                     d:'M835,388 C700,330 620,240 575,170'},
+  {from:'vad',       to:'stt',       label:'речевые сегменты',                 d:'M647,140 L663,140'},
+  {from:'stt',       to:'llm',       label:'текст запроса',                    d:'M877,140 L903,140'},
+  {from:'llm',       to:'tts',       label:'текст ответа',                     d:'M1077,140 L1113,140'},
+  {from:'tts',       to:'orb',       label:'SYS_TTS_SPEAK: озвучка',           d:'M1205,112 C1050,30 220,60 170,346'},
+  {from:'orb',       to:'tts',       label:'SYS_TTS_STOP: перебитие',          d:'M178,414 C280,120 1040,84 1204,166'},
+  {from:'llm',       to:'cloud',     label:'opt-in (после PII-санитайзера)',   d:'M1065,112 C1160,64 1320,64 1418,108', dashed:true},
+  {from:'screen',    to:'zsense',    label:'кадры (mss)',                      d:'M1358,700 C1140,705 920,665 752,624'},
+  {from:'zsense',    to:'llm',       label:'очищенный OCR-контекст',           d:'M655,588 C640,400 830,260 946,170'},
+  {from:'os',        to:'proactive', label:'hyprctl poll',                     d:'M1358,484 C1300,520 1250,570 1192,604'},
+  {from:'proactive', to:'llm',       label:'миссии + S(t)',                    d:'M1095,588 C1100,400 1060,260 1012,170'},
+  {from:'proactive', to:'orb',       label:'проактивная подсказка',            d:'M988,628 C680,715 300,660 172,416'},
+  {from:'llm',       to:'tier1',     label:'реплики диалога',                  d:'M940,172 C720,310 585,580 561,890'},
+  {from:'tier1',     to:'tier2',     label:'свёртка эпизодов',                 d:'M645,920 L673,920', dashed:true},
+  {from:'tier2',     to:'tier3',     label:'ночной rebuild 04:00',             d:'M865,920 L898,920', dashed:true},
+  {from:'tier3',     to:'llm',       label:'профиль и предпочтения',           d:'M992,890 C1006,620 1006,380 993,170'},
+  {from:'tier2',     to:'llm',       label:'поиск по эпизодам (FTS5)',         d:'M768,890 C765,600 855,360 938,172'}
+];
+
+const PANELS = [
+  {group:'ui',       x:60,   y:70,  w:230, h:640, label:'UI-слой'},
+  {group:'ipc',      x:280,  y:180, w:140, h:400, label:'IPC'},
+  {group:'engine',   x:455,  y:70,  w:860, h:645, label:'Engine-ядро + аудио-тракт'},
+  {group:'memory',   x:455,  y:855, w:650, h:140, label:'Память'},
+  {group:'external', x:1345, y:70,  w:220, h:725, label:'Внешний мир'}
+];
+
+const svg = document.getElementById('diagram');
+const tooltip = document.getElementById('tooltip');
+const caption = document.getElementById('caption');
+const nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
+
+/* ---------- defs: arrow markers per group ---------- */
+const defs = document.createElementNS(SVGNS, 'defs');
+for (const [gid, g] of Object.entries(GROUPS)) {
+  const m = document.createElementNS(SVGNS, 'marker');
+  m.setAttribute('id', 'arrow-' + gid);
+  m.setAttribute('viewBox', '0 0 6 6');
+  m.setAttribute('markerWidth', '7');
+  m.setAttribute('markerHeight', '7');
+  m.setAttribute('refX', '5');
+  m.setAttribute('refY', '3');
+  m.setAttribute('orient', 'auto');
+  const p = document.createElementNS(SVGNS, 'path');
+  p.setAttribute('d', 'M0,0 L6,3 L0,6 z');
+  p.setAttribute('fill', g.color);
+  m.appendChild(p);
+  defs.appendChild(m);
+}
+svg.appendChild(defs);
+
+/* ---------- layers ---------- */
+const world = document.createElementNS(SVGNS, 'g');
+world.setAttribute('id', 'world');
+const layerPanels = document.createElementNS(SVGNS, 'g');
+const layerEdges  = document.createElementNS(SVGNS, 'g');
+const layerNodes  = document.createElementNS(SVGNS, 'g');
+world.append(layerPanels, layerEdges, layerNodes);
+svg.appendChild(world);
+
+/* ---------- panels ---------- */
+for (const p of PANELS) {
+  const g = GROUPS[p.group];
+  const r = document.createElementNS(SVGNS, 'rect');
+  r.setAttribute('class', 'panel');
+  r.setAttribute('x', p.x); r.setAttribute('y', p.y);
+  r.setAttribute('width', p.w); r.setAttribute('height', p.h);
+  r.setAttribute('rx', 18);
+  r.setAttribute('fill', g.color);
+  r.setAttribute('stroke', g.color);
+  layerPanels.appendChild(r);
+  const t = document.createElementNS(SVGNS, 'text');
+  t.setAttribute('class', 'panel-label');
+  t.setAttribute('x', p.x + 16); t.setAttribute('y', p.y + 26);
+  t.textContent = p.label;
+  layerPanels.appendChild(t);
+}
+
+/* ---------- edges ---------- */
+function edgeId(e){ return e.from + '-' + e.to; }
+for (const e of EDGES) {
+  const id = edgeId(e);
+  const color = GROUPS[nodeById[e.from].group].color;
+  const g = document.createElementNS(SVGNS, 'g');
+  g.setAttribute('class', 'edge' + (e.dashed ? ' dashed' : ''));
+  g.dataset.id = id;
+  g.dataset.from = e.from;
+  g.dataset.to = e.to;
+
+  const base = document.createElementNS(SVGNS, 'path');
+  base.setAttribute('class', 'base');
+  base.setAttribute('id', 'p-' + id);
+  base.setAttribute('d', e.d);
+  base.setAttribute('stroke', color);
+  base.setAttribute('marker-end', 'url(#arrow-' + nodeById[e.to].group + ')');
+  g.appendChild(base);
+
+  const flow = document.createElementNS(SVGNS, 'path');
+  flow.setAttribute('class', 'flow');
+  flow.setAttribute('d', e.d);
+  flow.setAttribute('stroke', color);
+  g.appendChild(flow);
+
+  const t = document.createElementNS(SVGNS, 'text');
+  const tp = document.createElementNS(SVGNS, 'textPath');
+  tp.setAttribute('href', '#p-' + id);
+  tp.setAttribute('startOffset', '50%');
+  tp.setAttribute('text-anchor', 'middle');
+  tp.setAttribute('dy', '-7');
+  tp.textContent = e.label;
+  t.appendChild(tp);
+  g.appendChild(t);
+
+  layerEdges.appendChild(g);
+}
+
+/* ---------- nodes ---------- */
+for (const n of NODES) {
+  const g = GROUPS[n.group];
+  const el = document.createElementNS(SVGNS, 'g');
+  el.setAttribute('class', 'node');
+  el.dataset.id = n.id;
+  el.dataset.group = n.group;
+  el.dataset.label = n.label;
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', n.label + ' — ' + GROUPS[n.group].label + '. Enter — карточка узла');
+  el.style.setProperty('--gc', g.color);
+
+  const r = document.createElementNS(SVGNS, 'rect');
+  r.setAttribute('class', 'card');
+  r.setAttribute('x', n.x - n.w / 2);
+  r.setAttribute('y', n.y - n.h / 2);
+  r.setAttribute('width', n.w);
+  r.setAttribute('height', n.h);
+  r.setAttribute('rx', 12);
+  r.setAttribute('stroke', g.color);
+  el.appendChild(r);
+
+  const t = document.createElementNS(SVGNS, 'text');
+  if (n.vertical) {
+    t.setAttribute('transform', `rotate(-90 ${n.x} ${n.y})`);
+    t.setAttribute('x', n.x); t.setAttribute('y', n.y + 5);
+    t.textContent = n.label;
+    el.appendChild(t);
+  } else {
+    t.setAttribute('x', n.x);
+    t.setAttribute('y', n.y + 2);
+    t.textContent = n.label;
+    el.appendChild(t);
+    const tag = document.createElementNS(SVGNS, 'text');
+    tag.setAttribute('class', 'tag');
+    tag.setAttribute('x', n.x);
+    tag.setAttribute('y', n.y + 19);
+    tag.textContent = GROUPS[n.group].label.split('(')[0].trim();
+    el.appendChild(tag);
+  }
+  layerNodes.appendChild(el);
+}
+
+const nodeEls = [...layerNodes.querySelectorAll('.node')];
+const edgeEls = [...layerEdges.querySelectorAll('.edge')];
+
+/* ---------- pan & zoom ---------- */
+const VIEW = {w: 1620, h: 1060};
+const viewBox = {x: 0, y: 0, w: VIEW.w, h: VIEW.h};
+const KMIN = 0.55, KMAX = 3.5;
+const scrollBox = document.querySelector('.diagram-scroll');
+let panAnim = null;
+
+/* ---------- minimap ---------- */
+const miniSvg = document.getElementById('minimap-svg');
+for (const p of PANELS) {
+  const r = document.createElementNS(SVGNS, 'rect');
+  r.setAttribute('class', 'mm-panel');
+  r.setAttribute('x', p.x); r.setAttribute('y', p.y);
+  r.setAttribute('width', p.w); r.setAttribute('height', p.h);
+  r.setAttribute('rx', 18);
+  r.setAttribute('stroke', GROUPS[p.group].color);
+  miniSvg.appendChild(r);
+}
+for (const n of NODES) {
+  const r = document.createElementNS(SVGNS, 'rect');
+  r.setAttribute('class', 'mm-node');
+  r.setAttribute('x', n.x - n.w / 2); r.setAttribute('y', n.y - n.h / 2);
+  r.setAttribute('width', n.w); r.setAttribute('height', n.h);
+  r.setAttribute('rx', 10);
+  r.setAttribute('fill', GROUPS[n.group].color);
+  miniSvg.appendChild(r);
+}
+const mmView = document.createElementNS(SVGNS, 'rect');
+mmView.setAttribute('id', 'mm-view');
+mmView.setAttribute('rx', 10);
+miniSvg.appendChild(mmView);
+
+function syncMinimap() {
+  mmView.setAttribute('x', viewBox.x);
+  mmView.setAttribute('y', viewBox.y);
+  mmView.setAttribute('width', viewBox.w);
+  mmView.setAttribute('height', viewBox.h);
+}
+
+function mmPoint(ev) {
+  const r = miniSvg.getBoundingClientRect();
+  return {
+    x: (ev.clientX - r.left) / r.width * VIEW.w,
+    y: (ev.clientY - r.top) / r.height * VIEW.h
+  };
+}
+let mmDrag = false;
+function mmGo(ev) {
+  const p = mmPoint(ev);
+  cancelPanAnim();
+  viewBox.x = p.x - viewBox.w / 2;
+  viewBox.y = p.y - viewBox.h / 2;
+  setViewBox();
+}
+miniSvg.addEventListener('pointerdown', ev => {
+  ev.preventDefault();
+  mmDrag = true;
+  try { miniSvg.setPointerCapture(ev.pointerId); } catch (e) {}
+  mmGo(ev);
+});
+miniSvg.addEventListener('pointermove', ev => { if (mmDrag) mmGo(ev); });
+miniSvg.addEventListener('pointerup', () => { mmDrag = false; });
+miniSvg.addEventListener('pointercancel', () => { mmDrag = false; });
+
+function clampView() {
+  const pad = 120;
+  for (const [key, dim] of [['x', 'w'], ['y', 'h']]) {
+    const lo = -pad;
+    const hi = VIEW[dim] - viewBox[dim] + pad;
+    viewBox[key] = (lo > hi) ? (VIEW[dim] - viewBox[dim]) / 2 : Math.max(lo, Math.min(hi, viewBox[key]));
+  }
+}
+
+function setViewBox() {
+  clampView();
+  svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+  syncMinimap();
+}
+
+function cancelPanAnim() {
+  if (panAnim) { cancelAnimationFrame(panAnim); panAnim = null; }
+}
+
+function animatePanTo(cx, cy) {
+  cancelPanAnim();
+  const sx = viewBox.x, sy = viewBox.y;
+  const tx = cx - viewBox.w / 2, ty = cy - viewBox.h / 2;
+  if (Math.hypot(tx - sx, ty - sy) < 4) return;
+  const t0 = performance.now(), dur = 650;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const tick = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = ease(t);
+    viewBox.x = sx + (tx - sx) * e;
+    viewBox.y = sy + (ty - sy) * e;
+    setViewBox();
+    panAnim = (t < 1) ? requestAnimationFrame(tick) : null;
+  };
+  panAnim = requestAnimationFrame(tick);
+}
+
+function zoomAt(cx, cy, factor) {
+  const k = viewBox.w / VIEW.w;
+  const nk = Math.min(KMAX, Math.max(KMIN, k * factor));
+  const f = nk / k;
+  const nw = viewBox.w * f;
+  const nh = viewBox.h * f;
+  viewBox.x = cx - (cx - viewBox.x) * (nw / viewBox.w);
+  viewBox.y = cy - (cy - viewBox.y) * (nh / viewBox.h);
+  viewBox.w = nw;
+  viewBox.h = nh;
+  setViewBox();
+}
+
+function svgPoint(clientX, clientY) {
+  const r = svg.getBoundingClientRect();
+  return {
+    x: viewBox.x + (clientX - r.left) / r.width * viewBox.w,
+    y: viewBox.y + (clientY - r.top) / r.height * viewBox.h
+  };
+}
+
+scrollBox.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  cancelPanAnim();
+  const p = svgPoint(ev.clientX, ev.clientY);
+  zoomAt(p.x, p.y, ev.deltaY > 0 ? 1.18 : 1 / 1.18);
+}, {passive: false});
+
+let drag = null;
+let suppressClick = false;
+scrollBox.addEventListener('pointerdown', ev => {
+  if (ev.button !== 0) return;
+  cancelPanAnim();
+  drag = {x: ev.clientX, y: ev.clientY, moved: false, id: ev.pointerId};
+});
+scrollBox.addEventListener('pointermove', ev => {
+  if (!drag || ev.pointerId !== drag.id) return;
+  if (!(ev.buttons & 1)) { drag = null; scrollBox.classList.remove('panning'); return; }
+  const r = svg.getBoundingClientRect();
+  const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+  if (!drag.moved) {
+    drag.moved = true;
+    scrollBox.classList.add('panning');
+    try { scrollBox.setPointerCapture(ev.pointerId); } catch (e) {}
+  }
+  viewBox.x -= dx * viewBox.w / r.width;
+  viewBox.y -= dy * viewBox.h / r.height;
+  drag.x = ev.clientX;
+  drag.y = ev.clientY;
+  setViewBox();
+});
+scrollBox.addEventListener('pointerup', ev => {
+  if (drag && ev.pointerId === drag.id && drag.moved) suppressClick = true;
+  drag = null;
+  scrollBox.classList.remove('panning');
+});
+scrollBox.addEventListener('pointercancel', () => {
+  drag = null;
+  scrollBox.classList.remove('panning');
+});
+scrollBox.addEventListener('click', () => {
+  if (suppressClick) { suppressClick = false; return; }
+  if (inspectorOpen) closeInspector();
+});
+
+const viewCenter = () => ({x: viewBox.x + viewBox.w / 2, y: viewBox.y + viewBox.h / 2});
+document.getElementById('zoom-in').addEventListener('click', () => { const c = viewCenter(); zoomAt(c.x, c.y, 1 / 1.35); });
+document.getElementById('zoom-out').addEventListener('click', () => { const c = viewCenter(); zoomAt(c.x, c.y, 1.35); });
+document.getElementById('zoom-reset').addEventListener('click', () => {
+  cancelPanAnim();
+  Object.assign(viewBox, {x: 0, y: 0, w: VIEW.w, h: VIEW.h});
+  setViewBox();
+});
+
+/* ---------- hover: highlight incident edges + tooltip ---------- */
+function clearHover() {
+  svg.classList.remove('hov');
+  nodeEls.forEach(el => el.classList.remove('lit'));
+  edgeEls.forEach(el => el.classList.remove('lit'));
+  tooltip.classList.remove('show');
+}
+
+for (const el of nodeEls) {
+  el.addEventListener('mouseenter', () => {
+    const id = el.dataset.id;
+    svg.classList.add('hov');
+    el.classList.add('lit');
+    for (const e of edgeEls) {
+      if (e.dataset.from === id || e.dataset.to === id) {
+        e.classList.add('lit');
+        const otherId = e.dataset.from === id ? e.dataset.to : e.dataset.from;
+        const oEl = layerNodes.querySelector(`.node[data-id="${otherId}"]`);
+        if (oEl) oEl.classList.add('lit');
+      }
+    }
+    const n = nodeById[id];
+    const gr = GROUPS[n.group];
+    tooltip.innerHTML = '';
+    const b = document.createElement('b');
+    b.textContent = n.label;
+    b.style.color = gr.color;
+    const gline = document.createElement('span');
+    gline.className = 'g';
+    gline.style.color = gr.color;
+    gline.textContent = gr.label;
+    const d = document.createElement('span');
+    d.textContent = n.desc;
+    tooltip.append(b, gline, d);
+    tooltip.classList.add('show');
+  });
+  el.addEventListener('mousemove', ev => {
+    const pad = 16;
+    const r = tooltip.getBoundingClientRect();
+    let x = ev.clientX + pad, y = ev.clientY + pad;
+    if (x + r.width > window.innerWidth - 8) x = ev.clientX - r.width - pad;
+    if (y + r.height > window.innerHeight - 8) y = ev.clientY - r.height - pad;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  });
+  el.addEventListener('mouseleave', clearHover);
+}
+
+/* ---------- legend: click to isolate group ---------- */
+const chipsBox = document.getElementById('chips');
+let isolated = null;
+function applyIsolation() {
+  svg.classList.toggle('iso', !!isolated);
+  for (const el of nodeEls) {
+    el.classList.toggle('iso-dim', !!isolated && el.dataset.group !== isolated);
+  }
+  for (const e of edgeEls) {
+    const involved = nodeById[e.dataset.from].group === isolated || nodeById[e.dataset.to].group === isolated;
+    e.classList.toggle('iso-dim', !!isolated && !involved);
+  }
+  for (const c of chipsBox.children) c.classList.toggle('active', c.dataset.group === isolated);
+}
+for (const [gid, g] of Object.entries(GROUPS)) {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'chip';
+  chip.dataset.group = gid;
+  chip.style.setProperty('--gc', g.color);
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  const txt = document.createElement('span');
+  txt.textContent = g.label;
+  chip.append(dot, txt);
+  chip.addEventListener('click', () => {
+    isolated = (isolated === gid) ? null : gid;
+    applyIsolation();
+  });
+  chipsBox.appendChild(chip);
+}
+
+/* ---------- scenarios ---------- */
+let scn = null; // {name, steps, idx, timer, btn, paused}
+let inspectorOpen = false;
+
+const scnPrevBtn = document.getElementById('scn-prev');
+const scnAutoBtn = document.getElementById('scn-auto');
+const scnNextBtn = document.getElementById('scn-next');
+const scnDots = document.getElementById('scn-dots');
+
+function clearScenario() {
+  if (scn && scn.timer) clearTimeout(scn.timer);
+  if (scn && scn.btn) scn.btn.classList.remove('playing');
+  scn = null;
+  svg.classList.remove('scn-running');
+  for (const el of svg.querySelectorAll('.scn-on,.scn-flash,.scn-mem,.scn-pro')) {
+    el.classList.remove('scn-on', 'scn-flash', 'scn-mem', 'scn-pro');
+  }
+  caption.hidden = true;
+  caption.classList.remove('flash');
+}
+
+function showStep(i) {
+  const s = scn.steps[i];
+  scn.idx = i;
+  for (const el of svg.querySelectorAll('.scn-on,.scn-flash,.scn-mem,.scn-pro')) {
+    el.classList.remove('scn-on', 'scn-flash', 'scn-mem', 'scn-pro');
+  }
+  for (const nid of (s.nodes || [])) {
+    const el = layerNodes.querySelector(`.node[data-id="${nid}"]`);
+    if (el) el.classList.add(s.flash ? 'scn-flash' : (s.pro ? 'scn-pro' : 'scn-on'));
+  }
+  for (const eid of (s.edges || [])) {
+    const el = layerEdges.querySelector(`.edge[data-id="${eid}"]`);
+    if (el) {
+      el.classList.add(s.flash ? 'scn-flash' : (s.pro ? 'scn-pro' : 'scn-on'));
+      if (s.mem) el.classList.add('scn-mem');
+    }
+  }
+  caption.classList.toggle('flash', !!s.flash);
+  caption.querySelector('.step-no').textContent = `${scn.name} · шаг ${i + 1}/${scn.steps.length}`;
+  caption.querySelector('.step-text').textContent = s.text;
+  [...scnDots.children].forEach((d, di) => {
+    d.classList.toggle('on', di === i);
+    d.setAttribute('aria-current', di === i ? 'step' : 'false');
+  });
+  autoCenterOn(s);
+}
+
+/* мягкое авто-центрирование: только когда вид приближен и узел близко к краю */
+function autoCenterOn(s) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (viewBox.w >= VIEW.w * 0.98) return; // вся диаграмма и так видна
+  const nid = (s.nodes && s.nodes[0]);
+  if (!nid) return;
+  const n = nodeById[nid];
+  const mx0 = viewBox.x + viewBox.w * 0.18, mx1 = viewBox.x + viewBox.w * 0.82;
+  const my0 = viewBox.y + viewBox.h * 0.18, my1 = viewBox.y + viewBox.h * 0.82;
+  if (n.x >= mx0 && n.x <= mx1 && n.y >= my0 && n.y <= my1) return;
+  animatePanTo(n.x, n.y);
+}
+
+function scheduleNext() {
+  if (!scn || scn.paused) return;
+  if (scn.timer) clearTimeout(scn.timer);
+  const s = scn.steps[scn.idx];
+  scn.timer = setTimeout(() => {
+    if (!scn) return;
+    if (scn.idx + 1 < scn.steps.length) {
+      showStep(scn.idx + 1);
+      scheduleNext();
+    } else {
+      scn.timer = setTimeout(() => { if (scn) clearScenario(); }, 1400);
+    }
+  }, s.d || 1100);
+}
+
+function updateAutoBtn() {
+  scnAutoBtn.textContent = (scn && scn.paused) ? '▶' : '⏸';
+  scnAutoBtn.setAttribute('aria-label', (scn && scn.paused) ? 'Продолжить авто-проигрывание' : 'Пауза авто-проигрывания');
+}
+
+function stepManual(delta) {
+  if (!scn) return;
+  scn.paused = true;
+  if (scn.timer) { clearTimeout(scn.timer); scn.timer = null; }
+  const next = Math.min(scn.steps.length - 1, Math.max(0, scn.idx + delta));
+  showStep(next);
+  updateAutoBtn();
+}
+
+function toggleAuto() {
+  if (!scn) return;
+  scn.paused = !scn.paused;
+  if (scn.paused) {
+    if (scn.timer) { clearTimeout(scn.timer); scn.timer = null; }
+  } else {
+    scheduleNext();
+  }
+  updateAutoBtn();
+}
+
+scnPrevBtn.addEventListener('click', () => stepManual(-1));
+scnNextBtn.addEventListener('click', () => stepManual(1));
+scnAutoBtn.addEventListener('click', toggleAuto);
+
+function playScenario(btn, name, steps) {
+  clearScenario();
+  scn = {name, steps, idx: 0, timer: null, btn, paused: false};
+  btn.classList.add('playing');
+  svg.classList.add('scn-running');
+  caption.hidden = false;
+  scnDots.innerHTML = '';
+  steps.forEach((s, i) => {
+    const d = document.createElement('button');
+    d.type = 'button';
+    d.title = `Шаг ${i + 1}: ${s.text}`;
+    d.setAttribute('aria-label', `Перейти к шагу ${i + 1} из ${steps.length}`);
+    d.addEventListener('click', () => {
+      if (!scn) return;
+      scn.paused = true;
+      if (scn.timer) { clearTimeout(scn.timer); scn.timer = null; }
+      showStep(i);
+      updateAutoBtn();
+    });
+    scnDots.appendChild(d);
+  });
+  showStep(0);
+  scheduleNext();
+  updateAutoBtn();
+}
+
+const VOICE_STEPS = [
+  {nodes:['user'],        text:'Пользователь говорит — микрофон открыт, начинается реплика.', d:1300},
+  {nodes:['orb'],         edges:['user-orb'],        text:'Орб принимает голос и пульсирует — идёт прослушивание.', d:1200},
+  {nodes:['grpc'],        edges:['dashboard-grpc'],  text:'Аудио-фреймы и события уходят в двусторонний gRPC-стрим.', d:1200},
+  {nodes:['engine'],      edges:['grpc-engine'],     text:'Python Engine маршрутизирует аудио в диалоговый цикл.', d:1200},
+  {nodes:['vad'],         edges:['engine-vad'],      text:'VAD silero выделяет речевые сегменты, закрывает окно записи.', d:1200},
+  {nodes:['stt'],         edges:['vad-stt'],         text:'STT (sherpa-onnx / whisper) локально превращает речь в текст.', d:1300},
+  {nodes:['llm'],         edges:['stt-llm'],         text:'LLM-каскад формирует ответ — персона «Старший Брат».', d:1300},
+  {nodes:['tier2','tier3'], edges:['tier2-llm','tier3-llm'], mem:true, text:'Память подмешивает контекст: эпизоды (FTS5) и профиль пользователя.', d:1600},
+  {nodes:['tts'],         edges:['llm-tts'],         text:'TTS Piper синтезирует речь голосом ruslan.', d:1200},
+  {nodes:['orb'],         edges:['tts-orb'],         text:'SYS_TTS_SPEAK — орб озвучивает ответ пользователю.', d:1300},
+  {nodes:['user'],        text:'Пользователь слышит ответ Архи.', d:1100},
+  {nodes:['user'],        flash:true, text:'Barge-in! Пользователь перебивает на полуслове.', d:1000},
+  {nodes:['orb'],         flash:true, text:'Орб ловит перебивание — VAD срабатывает во время озвучки.', d:1000},
+  {nodes:['tts'],         edges:['orb-tts'], flash:true, text:'SYS_TTS_STOP — синтез остановлен мгновенно. Архи слушает снова.', d:1900}
+];
+
+const NIGHT_STEPS = [
+  {nodes:['tier1'], text:'Ночь, 04:00. Tier-1: буфер сессии готов к свёртке.', d:1400},
+  {nodes:['tier2'], edges:['tier1-tier2'], text:'Свёртка: реплики дня укладываются в эпизоды SQLite + FTS5.', d:1500},
+  {nodes:['tier3'], edges:['tier2-tier3'], text:'NIGHTLY_PROFILE_REBUILD — пересборка долговременного профиля (04:00).', d:1700},
+  {nodes:['llm'],   edges:['tier3-llm'],   text:'Утром LLM-каскад читает обновлённый профиль и предпочтения.', d:1600}
+];
+
+const PRO_STEPS = [
+  {nodes:['os'],        text:'hyprctl poll: активное окно и воркспейс опрашиваются каждые несколько секунд.', d:1300},
+  {nodes:['proactive'], edges:['os-proactive'], text:'Проактивный движок считает индекс фрустрации S(t) с полураспадом.', d:1500},
+  {nodes:['proactive'], pro:true, text:'S(t) пересёк порог — пользователь явно застрял. Решение: вмешаться.', d:1500},
+  {nodes:['llm'],       edges:['proactive-llm'], text:'Миссия + S(t) уходят в LLM-каскад — формируется короткая подсказка.', d:1400},
+  {nodes:['orb'],       edges:['proactive-orb'], text:'Орб мягко показывает проактивную подсказку — без внезапной озвучки.', d:1400},
+  {nodes:['user'],      text:'Пользователь видит подсказку и решает: принять или отмахнуться.', d:1400}
+];
+
+document.getElementById('btn-voice').addEventListener('click', ev => playScenario(ev.currentTarget, 'Голосовой запрос', VOICE_STEPS));
+document.getElementById('btn-night').addEventListener('click', ev => playScenario(ev.currentTarget, 'Ночь', NIGHT_STEPS));
+document.getElementById('btn-pro').addEventListener('click', ev => playScenario(ev.currentTarget, 'Проактивность', PRO_STEPS));
+
+/* ---------- скорость потоков ---------- */
+const flowSpeed = document.getElementById('flow-speed');
+const flowSpeedVal = document.getElementById('flow-speed-val');
+function applyFlowSpeed() {
+  const v = parseFloat(flowSpeed.value);
+  svg.style.setProperty('--flow-dur', (1.8 / v).toFixed(3) + 's');
+  flowSpeedVal.textContent = '×' + v.toFixed(1);
+  if (scn && !scn.paused) scheduleNext(); // пересчитать таймер текущего шага
+}
+flowSpeed.addEventListener('input', applyFlowSpeed);
+applyFlowSpeed();
+
+/* ---------- node search ---------- */
+const searchInput = document.getElementById('node-search');
+const searchCount = document.getElementById('search-count');
+let searchHits = [];
+let searchIdx = -1;
+function applySearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  svg.classList.toggle('searching', q.length > 0);
+  searchHits = [];
+  searchIdx = -1;
+  for (const el of nodeEls) {
+    const n = nodeById[el.dataset.id];
+    const hit = q.length > 0 && (n.label.toLowerCase().includes(q) || n.id.includes(q) || n.desc.toLowerCase().includes(q));
+    el.classList.toggle('search-hit', hit);
+    if (hit) searchHits.push(n);
+  }
+  searchCount.textContent = q ? (searchHits.length ? `найдено: ${searchHits.length}${searchHits.length > 1 ? ' · Enter — следующий' : ''}` : 'ничего не найдено') : '';
+  if (searchHits.length === 1) focusNode(searchHits[0]);
+}
+function focusNode(n) {
+  cancelPanAnim();
+  const nk = Math.min(KMAX, Math.max(KMIN, 0.9));
+  viewBox.w = VIEW.w * nk;
+  viewBox.h = VIEW.h * nk;
+  viewBox.x = n.x - viewBox.w / 2;
+  viewBox.y = n.y - viewBox.h / 2;
+  setViewBox();
+}
+searchInput.addEventListener('input', applySearch);
+searchInput.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    if (!searchHits.length) return;
+    searchIdx = (searchIdx + 1) % searchHits.length;
+    focusNode(searchHits[searchIdx]);
+  } else if (ev.key === 'Escape') {
+    searchInput.value = '';
+    applySearch();
+    searchInput.blur();
+  }
+});
+
+/* ---------- all flows toggle ---------- */
+document.getElementById('btn-flow').addEventListener('click', ev => {
+  const on = svg.classList.toggle('allflow');
+  ev.currentTarget.classList.toggle('toggled', on);
+});
+
+/* ---------- inspector (pinned tooltip + node stats) ---------- */
+const inspector = document.getElementById('inspector');
+function openInspector(n) {
+  const gr = GROUPS[n.group];
+  inspector.innerHTML = '';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'close ghost';
+  close.textContent = '✕';
+  close.addEventListener('click', ev => { ev.stopPropagation(); closeInspector(); });
+  const h3 = document.createElement('h3');
+  h3.textContent = n.label;
+  h3.style.color = gr.color;
+  const gline = document.createElement('span');
+  gline.className = 'g';
+  gline.style.color = gr.color;
+  gline.textContent = gr.label;
+
+  const inCount = EDGES.filter(e => e.to === n.id).length;
+  const outCount = EDGES.filter(e => e.from === n.id).length;
+  const stats = document.createElement('div');
+  stats.className = 'stats';
+  const sIn = document.createElement('span');
+  sIn.innerHTML = 'входящих <b></b>';
+  sIn.querySelector('b').textContent = inCount;
+  const sOut = document.createElement('span');
+  sOut.innerHTML = 'исходящих <b></b>';
+  sOut.querySelector('b').textContent = outCount;
+  const sDeg = document.createElement('span');
+  sDeg.innerHTML = 'всего связей <b></b>';
+  sDeg.querySelector('b').textContent = inCount + outCount;
+  stats.append(sIn, sOut, sDeg);
+
+  const p = document.createElement('p');
+  p.textContent = n.desc;
+  inspector.append(close, h3, gline, stats, p);
+  const conn = EDGES.filter(e => e.from === n.id || e.to === n.id);
+  if (conn.length) {
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Связи';
+    const ul = document.createElement('ul');
+    for (const e of conn) {
+      const li = document.createElement('li');
+      const outgoing = e.from === n.id;
+      if (!outgoing) li.classList.add('in');
+      const other = nodeById[outgoing ? e.to : e.from];
+      li.textContent = `${other.label} — ${e.label}`;
+      ul.appendChild(li);
+    }
+    inspector.append(h4, ul);
+  }
+  inspector.hidden = false;
+  inspector.dataset.nodeId = n.id;
+  inspectorOpen = true;
+}
+function closeInspector() {
+  inspector.hidden = true;
+  delete inspector.dataset.nodeId;
+  inspectorOpen = false;
+}
+inspector.addEventListener('pointerdown', ev => ev.stopPropagation());
+inspector.addEventListener('click', ev => ev.stopPropagation());
+
+for (const el of nodeEls) {
+  el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (suppressClick) { suppressClick = false; return; }
+    const n = nodeById[el.dataset.id];
+    if (inspectorOpen && inspector.dataset.nodeId === n.id) { closeInspector(); return; }
+    openInspector(n);
+  });
+  el.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      openInspector(nodeById[el.dataset.id]);
+    }
+  });
+}
+
+/* ---------- PNG export (SVG → canvas, без внешних зависимостей) ---------- */
+document.getElementById('btn-export').addEventListener('click', ev => {
+  const btn = ev.currentTarget;
+  const orig = btn.textContent;
+  btn.disabled = true;
+  try {
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    clone.setAttribute('width', String(VIEW.w * 2));
+    clone.setAttribute('height', String(VIEW.h * 2));
+    clone.setAttribute('viewBox', `0 0 ${VIEW.w} ${VIEW.h}`);
+    const css = [...document.styleSheets]
+      .map(sh => { try { return [...sh.cssRules].map(r => r.cssText).join('\n'); } catch (e) { return ''; } })
+      .join('\n');
+    const styleEl = document.createElementNS(SVGNS, 'style');
+    styleEl.textContent = css;
+    clone.insertBefore(styleEl, clone.firstChild);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = VIEW.w * 2;
+      c.height = VIEW.h * 2;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0a0f1a';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const a = document.createElement('a');
+      a.download = 'archie-architecture.png';
+      a.href = c.toDataURL('image/png');
+      a.click();
+      btn.disabled = false;
+      btn.textContent = orig;
+    };
+    img.onerror = () => {
+      btn.disabled = false;
+      btn.textContent = 'Экспорт недоступен';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Экспорт недоступен';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }
+});
+
+/* ---------- global reset ---------- */
+function resetView() {
+  cancelPanAnim();
+  Object.assign(viewBox, {x: 0, y: 0, w: VIEW.w, h: VIEW.h});
+  setViewBox();
+  svg.classList.remove('allflow');
+  document.getElementById('btn-flow').classList.remove('toggled');
+  searchInput.value = '';
+  applySearch();
+  closeInspector();
+}
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  clearScenario();
+  isolated = null;
+  applyIsolation();
+  clearHover();
+  resetView();
+});
+
+/* ---------- keyboard shortcuts ---------- */
+svg.addEventListener('keydown', ev => {
+  if (ev.target.closest && ev.target.closest('.node')) return;
+  const c = viewCenter();
+  if (ev.key === '+' || ev.key === '=') { ev.preventDefault(); zoomAt(c.x, c.y, 1 / 1.35); }
+  else if (ev.key === '-' || ev.key === '_') { ev.preventDefault(); zoomAt(c.x, c.y, 1.35); }
+  else if (ev.key === '0') { ev.preventDefault(); cancelPanAnim(); Object.assign(viewBox, {x: 0, y: 0, w: VIEW.w, h: VIEW.h}); setViewBox(); }
+});
+window.addEventListener('keydown', ev => {
+  if (document.activeElement === searchInput) return; // поиск обрабатывает свои клавиши сам
+  const ae = document.activeElement;
+  const onInput = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
+  const onButton = ae && ae.tagName === 'BUTTON';
+  const onNode = ae && ae.closest && ae.closest('.node');
+  if (scn && !onInput && ev.key === 'ArrowLeft') { ev.preventDefault(); stepManual(-1); return; }
+  if (scn && !onInput && ev.key === 'ArrowRight') { ev.preventDefault(); stepManual(1); return; }
+  if (scn && !onInput && !onButton && !onNode && ev.key === ' ') { ev.preventDefault(); toggleAuto(); return; }
+  if (ev.key !== 'Escape') return;
+  if (scn) { clearScenario(); return; }
+  if (inspectorOpen) { closeInspector(); return; }
+  if (searchInput.value) { searchInput.value = ''; applySearch(); return; }
+  if (isolated) { isolated = null; applyIsolation(); }
+});
+
+/* ---------- init ---------- */
+setViewBox();
+</script>
+</body>
+</html>
