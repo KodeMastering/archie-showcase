@@ -1,0 +1,15 @@
+{
+  "$schema": "https://hyperframes.sh/schema.json",
+  "skill": "general-video",
+  "privacy": {
+    "localSensing": true,
+    "localMemory": true,
+    "piiSanitization": true,
+    "cloudLLM": {
+      "optIn": true,
+      "sanitizedContextOnly": true,
+      "egressChecks": true
+    },
+    "fallback": "local_and_mock"
+  }
+}

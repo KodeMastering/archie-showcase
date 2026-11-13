@@ -1,0 +1,1641 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Archie — 60s Promo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #07080f;
+        --surface: #0d1019;
+        --elevated: #151929;
+        --primary: #8b7cff;
+        --secondary: #22d3ee;
+        --success: #2dd4bf;
+        --danger: #fb7185;
+        --text: #f1f3fa;
+        --muted: #a6adc4;
+        --f-display: "Unbounded", system-ui, sans-serif;
+        --f-body: "Manrope", system-ui, "Segoe UI", sans-serif;
+        --f-mono: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--f-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      /* ---------- сквозной фон ---------- */
+      .bg-base {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(1100px 620px at 20% -12%, rgba(139, 124, 255, 0.14), transparent 62%),
+          radial-gradient(900px 560px at 96% 4%, rgba(34, 211, 238, 0.07), transparent 58%),
+          radial-gradient(760px 620px at 50% 116%, rgba(45, 212, 191, 0.05), transparent 62%),
+          var(--bg);
+      }
+      .bg-grid {
+        position: absolute;
+        inset: -8%;
+        background-image:
+          linear-gradient(rgba(139, 124, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(139, 124, 255, 0.05) 1px, transparent 1px);
+        background-size: 96px 96px;
+        mask-image: radial-gradient(1250px 760px at 50% 46%, black 28%, transparent 76%);
+        -webkit-mask-image: radial-gradient(1250px 760px at 50% 46%, black 28%, transparent 76%);
+        will-change: transform;
+      }
+
+      /* плёночное зерно — SVG feTurbulence, статичный seed (детерминизм) */
+      #grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.06;
+        mix-blend-mode: overlay;
+      }
+
+      .clip { position: absolute; inset: 0; }
+
+      .eyebrow {
+        font-family: var(--f-body);
+        font-weight: 600;
+        font-size: 28px;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* ============ СЦЕНА 1 · ORB AWAKENING ============ */
+      #scene-orb {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+      }
+      /* первый кадр = превью-миниатюра: орб и заголовок видны сразу,
+         анимация входа начинается с t=0.4 и перезаписывает базовые значения */
+      #orb-hero { opacity: 0.92; }
+      #hero-title .ltr { opacity: 1; }
+      .orb-stage { position: relative; width: 560px; height: 560px; }
+      .orb-wrap {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        will-change: transform, opacity;
+      }
+      .orb-halo {
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 50% 45%, rgba(34, 211, 238, 0.30), rgba(139, 124, 255, 0.16) 46%, transparent 68%);
+        filter: blur(52px);
+      }
+      .orb-core {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 38% 32%, rgba(241, 243, 250, 0.85) 0%, rgba(34, 211, 238, 0.65) 18%, rgba(139, 124, 255, 0.85) 58%, rgba(13, 16, 25, 0.95) 100%);
+        box-shadow:
+          0 0 120px -12px rgba(34, 211, 238, 0.55),
+          0 0 220px -40px rgba(139, 124, 255, 0.75),
+          inset 0 0 60px rgba(139, 124, 255, 0.5),
+          inset -24px -30px 80px rgba(7, 8, 15, 0.85);
+      }
+      .orb-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 420px;
+        height: 420px;
+        margin: -210px 0 0 -210px;
+        border-radius: 50%;
+        border: 1px solid rgba(34, 211, 238, 0.4);
+        transform: rotateX(68deg);
+        box-shadow: 0 0 26px rgba(34, 211, 238, 0.25);
+      }
+      .orb-ring::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -4px;
+        width: 9px;
+        height: 9px;
+        margin-left: -4px;
+        border-radius: 50%;
+        background: var(--secondary);
+        box-shadow: 0 0 16px 4px rgba(34, 211, 238, 0.8);
+      }
+      .hero-title {
+        display: flex;
+        margin: 26px 0 0;
+        font-family: var(--f-display);
+        font-weight: 900;
+        font-size: 150px;
+        letter-spacing: 0.06em;
+        line-height: 1;
+        background: linear-gradient(100deg, #f3f1ff 10%, var(--primary) 55%, var(--secondary) 95%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero-title .ltr { display: inline-block; will-change: transform, opacity, filter; }
+      .hero-sub {
+        margin: 20px 0 0;
+        font-size: 30px;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 0.03em;
+      }
+      .hero-sub b { color: var(--text); font-weight: 700; }
+      .dust { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+      .dust i {
+        position: absolute;
+        bottom: -20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(34, 211, 238, 0.75), rgba(139, 124, 255, 0.28) 65%, transparent);
+        will-change: transform, opacity;
+      }
+      /* вспышка зажигания орба (t≈0.55) */
+      .ignition-flash {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 640px;
+        height: 640px;
+        margin: -320px 0 0 -320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(241, 243, 250, 0.55), rgba(34, 211, 238, 0.4) 32%, rgba(139, 124, 255, 0.18) 55%, transparent 72%);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .ignition-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 280px;
+        height: 280px;
+        margin: -140px 0 0 -140px;
+        border-radius: 50%;
+        border: 2.5px solid rgba(34, 211, 238, 0.9);
+        box-shadow: 0 0 44px 8px rgba(34, 211, 238, 0.5), inset 0 0 30px rgba(139, 124, 255, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      /* ============ СЦЕНА 2 · BARGE-IN ============ */
+      #scene-barge { display: flex; flex-direction: column; justify-content: center; }
+      .barge-zoom { position: absolute; inset: 0; will-change: transform; }
+      .barge-center-orb {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        width: 340px;
+        height: 340px;
+        margin: -170px 0 0 -170px;
+        will-change: transform, opacity;
+      }
+      .barge-center-orb .orb-halo { width: 380px; height: 380px; }
+      .barge-center-orb .orb-core { width: 180px; height: 180px; }
+      #wave-svg {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+      }
+      .barge-title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 128px;
+        text-align: center;
+        margin: 0;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 72px;
+        line-height: 1.14;
+        will-change: transform, opacity;
+      }
+      .barge-title em {
+        font-style: normal;
+        background: linear-gradient(100deg, var(--secondary), var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .wave-tag {
+        position: absolute;
+        font-family: var(--f-mono);
+        font-size: 20px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 10px 20px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(13, 16, 25, 0.72);
+        backdrop-filter: blur(6px);
+        will-change: opacity;
+      }
+      .wave-tag--archie { color: var(--secondary); left: 220px; top: 660px; }
+      .wave-tag--user { color: var(--primary); right: 220px; top: 330px; }
+      .barge-flash {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(700px 420px at 62% 50%, rgba(34, 211, 238, 0.16), transparent 70%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ============ СЦЕНА 3 · Z-SENSE ============ */
+      #scene-zsense { display: flex; align-items: center; }
+      .zs-head {
+        position: absolute;
+        left: 130px;
+        top: 150px;
+        max-width: 700px;
+        z-index: 3;
+        will-change: clip-path, opacity;
+      }
+      .zs-title {
+        margin: 18px 0 0;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 76px;
+        line-height: 1.12;
+      }
+      .zs-title em { font-style: normal; color: var(--secondary); }
+      .zs-screen {
+        position: absolute;
+        right: 120px;
+        top: 130px;
+        width: 880px;
+        height: 820px;
+        border-radius: 26px;
+        border: 1px solid rgba(139, 124, 255, 0.22);
+        background: linear-gradient(165deg, rgba(21, 25, 41, 0.94), rgba(13, 16, 25, 0.97));
+        box-shadow: 0 40px 110px -40px rgba(0, 0, 0, 0.85), 0 0 70px -28px rgba(34, 211, 238, 0.3);
+        overflow: hidden;
+        will-change: transform;
+      }
+      .zs-screen-bar {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 22px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .zs-dot { width: 12px; height: 12px; border-radius: 50%; }
+      .zs-body { position: relative; padding: 30px 34px; font-family: var(--f-mono); }
+      .zs-line {
+        position: relative;
+        height: 26px;
+        margin-bottom: 18px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+      .zs-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--w, 60%);
+        border-radius: 6px;
+        background: linear-gradient(90deg, rgba(139, 124, 255, 0.16), rgba(34, 211, 238, 0.1));
+      }
+      .zs-line .zs-box {
+        position: absolute;
+        inset: -7px;
+        border: 1px solid var(--secondary);
+        border-radius: 9px;
+        box-shadow: 0 0 22px -4px rgba(34, 211, 238, 0.55);
+        opacity: 0;
+        will-change: opacity;
+      }
+      .zs-scan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 52px;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, var(--secondary) 30%, var(--secondary) 70%, transparent);
+        box-shadow: 0 0 34px 8px rgba(34, 211, 238, 0.55), 0 26px 60px 12px rgba(34, 211, 238, 0.2);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .zs-chip {
+        position: absolute;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-family: var(--f-mono);
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--secondary);
+        background: rgba(7, 8, 15, 0.85);
+        border: 1px solid rgba(34, 211, 238, 0.5);
+        box-shadow: 0 0 24px -6px rgba(34, 211, 238, 0.6);
+        opacity: 0;
+        will-change: transform, opacity;
+        white-space: nowrap;
+      }
+      .zs-orb {
+        position: absolute;
+        left: 150px;
+        bottom: 110px;
+        width: 200px;
+        height: 200px;
+        will-change: transform;
+      }
+      .zs-orb .orb-halo { width: 220px; height: 220px; }
+      .zs-orb .orb-core { width: 110px; height: 110px; }
+
+      /* ============ СЦЕНА 4 · ПАМЯТЬ ============ */
+      #scene-memory { display: flex; flex-direction: column; justify-content: center; padding: 0 150px; }
+      .mem-head { margin-bottom: 42px; will-change: transform, opacity; }
+      .mem-title {
+        margin: 16px 0 0;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 64px;
+        line-height: 1.14;
+        max-width: 1500px;
+      }
+      .mem-title em { font-style: normal; color: var(--primary); }
+      .mem-layers { display: flex; flex-direction: column; gap: 20px; position: relative; }
+      .mem-tier {
+        position: relative;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+        padding: 26px 34px;
+        will-change: transform, opacity, filter;
+      }
+      .mem-tier h3 {
+        margin: 0 0 8px;
+        font-family: var(--f-mono);
+        font-weight: 600;
+        font-size: 20px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--secondary);
+      }
+      .mem-tier p { margin: 0; font-size: 28px; color: var(--muted); font-weight: 500; }
+      .mem-tier p b { color: var(--text); }
+      .mem-cards { display: flex; gap: 14px; margin-top: 14px; }
+      .mem-card {
+        padding: 12px 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(139, 124, 255, 0.28);
+        background: rgba(21, 25, 41, 0.8);
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--text);
+        will-change: transform, opacity;
+      }
+      /* мелкий декоративный текст — текстура, не читаемый контент */
+      .mem-thread {
+        position: absolute;
+        left: 50%;
+        width: 2px;
+        height: 20px;
+        background: linear-gradient(180deg, rgba(34, 211, 238, 0.6), rgba(139, 124, 255, 0.6));
+        opacity: 0;
+      }
+      .mem-night {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(7, 8, 15, 0.0), rgba(10, 14, 34, 0.86));
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .mem-head, .mem-layers { position: relative; z-index: 2; }
+      .mem-moon {
+        position: absolute;
+        right: 170px;
+        top: 120px;
+        width: 84px;
+        height: 84px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .mem-node {
+        position: absolute;
+        right: 150px;
+        bottom: 140px;
+        width: 120px;
+        height: 120px;
+        opacity: 0;
+        will-change: transform, opacity, filter;
+      }
+
+      /* ============ СЦЕНА 5 · S(t) ============ */
+      #scene-stress { display: flex; align-items: center; padding: 0 130px; gap: 80px; }
+      .st-left { flex: 0 0 640px; will-change: transform, opacity; }
+      .st-title {
+        margin: 16px 0 22px;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 64px;
+        line-height: 1.16;
+      }
+      .st-title em { font-style: normal; color: var(--danger); }
+      .st-sub { margin: 0; font-size: 28px; line-height: 1.5; color: var(--muted); font-weight: 500; max-width: 580px; }
+      .st-sub b { color: var(--text); }
+      .st-chart { position: relative; flex: 1; height: 560px; will-change: transform, opacity; }
+      #st-svg { width: 100%; height: 100%; }
+      .st-axis-label {
+        position: absolute;
+        font-family: var(--f-mono);
+        font-size: 17px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+      .st-orb {
+        position: absolute;
+        left: 60px;
+        bottom: 60px;
+        width: 170px;
+        height: 170px;
+        will-change: transform, filter;
+      }
+      .st-orb .orb-halo { width: 190px; height: 190px; }
+      .st-orb .orb-core { width: 96px; height: 96px; }
+
+      /* ============ СЦЕНА 6 · ПРИВАТНОСТЬ ============ */
+      #scene-shield {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+      }
+      .shield-stage { position: relative; width: 640px; height: 640px; will-change: transform; }
+      .shield-orb {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+      .shield-orb .orb-halo { width: 400px; height: 400px; }
+      .shield-orb .orb-core { width: 210px; height: 210px; }
+      .shield-glass {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 460px;
+        height: 460px;
+        margin: -230px 0 0 -230px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 34% 28%, rgba(34, 211, 238, 0.12), rgba(21, 25, 41, 0.32) 62%, rgba(13, 16, 25, 0.5));
+        border: 1.5px solid rgba(34, 211, 238, 0.55);
+        box-shadow:
+          0 0 70px -14px rgba(34, 211, 238, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(7px);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .shield-label {
+        position: absolute;
+        padding: 10px 22px;
+        border-radius: 999px;
+        font-family: var(--f-mono);
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--text);
+        background: rgba(13, 16, 25, 0.85);
+        border: 1px solid rgba(139, 124, 255, 0.4);
+        opacity: 0;
+        will-change: transform, opacity;
+        white-space: nowrap;
+      }
+      .shield-cloud {
+        position: absolute;
+        top: -96px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        will-change: opacity;
+      }
+      .cloud-link {
+        width: 2px;
+        height: 52px;
+        background: repeating-linear-gradient(180deg, rgba(166, 173, 196, 0.6) 0 6px, transparent 6px 12px);
+      }
+      .cloud-boundary {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--secondary);
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.05em;
+      }
+      .cloud-boundary::before,
+      .cloud-boundary::after {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: rgba(34, 211, 238, 0.65);
+      }
+      .cloud-row { display: flex; align-items: center; gap: 16px; }
+      .cloud-row .lbl { font-size: 21px; color: var(--muted); font-weight: 600; }
+      .toggle {
+        width: 62px;
+        height: 32px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+      .sh-title {
+        margin: 40px 0 0;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 62px;
+        line-height: 1.14;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+      .sh-title em { font-style: normal; color: var(--secondary); }
+
+      /* ============ СЦЕНА 7 · ФИНАЛ ============ */
+      #scene-final {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .fin-orb {
+        width: 420px;
+        height: 420px;
+        position: relative;
+        display: grid;
+        place-items: center;
+        will-change: transform, filter;
+      }
+      .fin-orb .orb-halo { width: 470px; height: 470px; }
+      .fin-orb .orb-core { width: 240px; height: 240px; }
+      .fin-threads { position: absolute; inset: 0; pointer-events: none; }
+      .fin-thread {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 2px;
+        width: 900px;
+        transform-origin: left center;
+        background: linear-gradient(90deg, rgba(34, 211, 238, 0), rgba(34, 211, 238, 0.7), rgba(139, 124, 255, 0));
+        will-change: transform, opacity;
+      }
+      .fin-slogan {
+        margin: 44px 0 0;
+        font-family: var(--f-body);
+        font-weight: 800;
+        font-size: 84px;
+        line-height: 1.12;
+        max-width: 1400px;
+        background: linear-gradient(100deg, #f1f3fa 20%, var(--primary) 75%, var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        will-change: transform, opacity;
+      }
+      .fin-manifest {
+        margin: 26px 0 0;
+        font-size: 28px;
+        color: var(--muted);
+        font-weight: 500;
+        line-height: 1.5;
+        max-width: 1050px;
+        will-change: opacity;
+      }
+      .fin-cta {
+        margin-top: 46px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 52px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(139, 124, 255, 0.65);
+        color: var(--text);
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        box-shadow: 0 0 44px -14px rgba(139, 124, 255, 0.7), inset 0 0 24px rgba(139, 124, 255, 0.12);
+        will-change: transform, opacity;
+      }
+      .fin-cta .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 14px 3px rgba(45, 212, 191, 0.85);
+      }
+      .fin-stack {
+        position: absolute;
+        bottom: 44px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: var(--f-mono);
+        font-size: 19px;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        opacity: 0;
+        will-change: opacity;
+      }
+
+      /* ============ ВОЛНА 3 · ПОЛИРОВКА: слои, параллакс, частицы ============ */
+      /* Сцена 1: лучи за орбом, второе кольцо, дальние эхо-орбы */
+      .orb-rays {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 860px;
+        height: 860px;
+        margin: -430px 0 0 -430px;
+        border-radius: 50%;
+        background: repeating-conic-gradient(from 0deg, rgba(34, 211, 238, 0.055) 0 5deg, transparent 5deg 17deg);
+        -webkit-mask-image: radial-gradient(circle, black 0%, transparent 66%);
+        mask-image: radial-gradient(circle, black 0%, transparent 66%);
+        opacity: 0.8;
+        pointer-events: none;
+        will-change: transform;
+      }
+      .orb-ring2 {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 500px;
+        height: 500px;
+        margin: -250px 0 0 -250px;
+        border-radius: 50%;
+        border: 1px dashed rgba(139, 124, 255, 0.35);
+        transform: rotateX(74deg);
+        will-change: transform;
+      }
+      .echo-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(34px);
+        opacity: 0.45;
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      /* Сцена 2: кольцо «слушает», ударная рябь, вспышка-осколки */
+      .listen-ring {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        width: 300px;
+        height: 300px;
+        margin: -150px 0 0 -150px;
+        border-radius: 50%;
+        border: 1.5px dashed rgba(34, 211, 238, 0.6);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .barge-ripple {
+        position: absolute;
+        left: 62%;
+        top: 50%;
+        width: 70px;
+        height: 70px;
+        margin: -35px 0 0 -35px;
+        border-radius: 50%;
+        border: 2px solid rgba(139, 124, 255, 0.85);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .barge-burst { position: absolute; left: 62%; top: 50%; pointer-events: none; }
+      .barge-burst i {
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        margin: -3.5px 0 0 -3.5px;
+        border-radius: 50%;
+        background: var(--primary);
+        box-shadow: 0 0 14px 3px rgba(139, 124, 255, 0.85);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Сцена 3: световой шлейф за линией сканирования */
+      .zs-scan-glow {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 52px;
+        height: 110px;
+        margin-top: -106px;
+        background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.13));
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      /* хроматический глитч на сканирующей линии (RGB-сдвиг) */
+      .zs-glitch {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 52px;
+        height: 26px;
+        margin-top: -11px;
+        opacity: 0;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        will-change: transform, opacity;
+      }
+      .zs-glitch--r { background: rgba(251, 113, 133, 0.3); }
+      .zs-glitch--b { background: rgba(139, 124, 255, 0.3); }
+
+      /* Сцена 4: ночные искры */
+      .mem-sparks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+      .mem-sparks i {
+        position: absolute;
+        bottom: 120px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(139, 124, 255, 0.8), rgba(34, 211, 238, 0.25) 65%, transparent);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      /* звёздная пыль ночного rebuild */
+      .mem-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+      .mem-stars i {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgba(241, 243, 250, 0.9);
+        box-shadow: 0 0 8px 1px rgba(34, 211, 238, 0.6);
+        opacity: 0;
+        will-change: opacity;
+      }
+      .st-pulse {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(1150px 700px at 68% 52%, rgba(251, 113, 133, 0.14), rgba(139, 124, 255, 0.05) 52%, transparent 72%);
+        opacity: 0;
+        pointer-events: none;
+        will-change: opacity;
+      }
+
+      /* Сцена 7: расходящиеся кольца, искры-сближение, виньетка */
+      .fin-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1.5px solid rgba(34, 211, 238, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .fin-sparks { position: absolute; inset: 0; pointer-events: none; }
+      .fin-spark-arm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+      .fin-spark-arm i {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        margin: -4px 0 0 -4px;
+        border-radius: 50%;
+        background: var(--secondary);
+        box-shadow: 0 0 14px 3px rgba(34, 211, 238, 0.85);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .fin-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(1250px 760px at 50% 46%, transparent 52%, rgba(3, 4, 9, 0.8));
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ---------- переходные свипы ---------- */
+      .wipe {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        transform: scaleX(0);
+        transform-origin: left center;
+        will-change: transform;
+      }
+      .wipe--cyan { background: linear-gradient(100deg, #0e7490, var(--secondary)); }
+      .wipe--violet { background: linear-gradient(100deg, #6d5bd0, var(--primary)); }
+      .wipe--ink { background: var(--surface); }
+      .wipe--teal { background: linear-gradient(100deg, #0f766e, var(--success)); }
+
+      /* ---------- титры ---------- */
+      #captions {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 54px;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .cap {
+        position: absolute;
+        bottom: 0;
+        max-width: 1480px;
+        padding: 14px 32px;
+        border-radius: 14px;
+        background: rgba(7, 8, 15, 0.8);
+        border: 1px solid rgba(139, 124, 255, 0.28);
+        backdrop-filter: blur(8px);
+        font-size: 29px;
+        font-weight: 600;
+        line-height: 1.38;
+        text-align: center;
+        color: var(--text);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .cap b { color: var(--primary); }
+      .cap i { font-style: normal; color: var(--secondary); }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="archie-promo-60"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+      data-duration="60"
+    >
+      <div class="bg-base"></div>
+      <div class="bg-grid" id="bg-grid"></div>
+      <!-- звуковая дорожка собирается ffmpeg и муксится поверх видео (renders/archie-mix.wav) -->
+      <audio id="ost" preload="auto" autoplay volume="0" src="archie-mix.wav" data-start="0" data-media-start="0"></audio>
+
+      <!-- ============ СЦЕНА 1 · ORB · 0–6 ============ -->
+      <section id="scene-orb" class="clip" data-start="0" data-duration="6">
+        <div class="dust" id="dust">
+          <i style="left: 18%; width: 6px; height: 6px;"></i>
+          <i style="left: 27%; width: 4px; height: 4px;"></i>
+          <i style="left: 38%; width: 7px; height: 7px;"></i>
+          <i style="left: 47%; width: 3px; height: 3px;"></i>
+          <i style="left: 56%; width: 5px; height: 5px;"></i>
+          <i style="left: 64%; width: 4px; height: 4px;"></i>
+          <i style="left: 72%; width: 6px; height: 6px;"></i>
+          <i style="left: 81%; width: 3px; height: 3px;"></i>
+          <i style="left: 88%; width: 5px; height: 5px;"></i>
+          <i style="left: 12%; width: 4px; height: 4px;"></i>
+          <i style="left: 33%; width: 3px; height: 3px;"></i>
+          <i style="left: 43%; width: 5px; height: 5px;"></i>
+          <i style="left: 60%; width: 3px; height: 3px;"></i>
+          <i style="left: 76%; width: 5px; height: 5px;"></i>
+          <i style="left: 93%; width: 4px; height: 4px;"></i>
+          <i style="left: 51%; width: 6px; height: 6px;"></i>
+        </div>
+        <div class="ignition-flash" id="ignition-flash"></div>
+        <div class="ignition-ring" id="ignition-ring"></div>
+        <div class="echo-orb" style="left: 150px; top: 170px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(34, 211, 238, 0.4), transparent 70%);"></div>
+        <div class="echo-orb" style="right: 180px; top: 130px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(139, 124, 255, 0.42), transparent 70%);"></div>
+        <div class="echo-orb" style="left: 240px; bottom: 150px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(45, 212, 191, 0.32), transparent 70%);"></div>
+        <div class="orb-stage">
+          <div class="orb-wrap" id="orb-hero">
+            <div class="orb-rays" id="orb-rays"></div>
+            <div class="orb-halo"></div>
+            <div class="orb-core"></div>
+            <div class="orb-ring"></div>
+            <div class="orb-ring2"></div>
+          </div>
+        </div>
+        <h1 class="hero-title" id="hero-title" aria-label="ARCHIE">
+          <span class="ltr">A</span><span class="ltr">R</span><span class="ltr">C</span><span class="ltr">H</span><span class="ltr">I</span><span class="ltr">E</span>
+        </h1>
+        <p class="hero-sub" id="hero-sub">Напарник <b>уровня ОС</b></p>
+      </section>
+
+      <!-- ============ СЦЕНА 2 · BARGE-IN · 6–15 ============ -->
+      <section id="scene-barge" class="clip" data-start="6" data-duration="9">
+        <div class="barge-zoom" id="barge-zoom">
+          <div class="barge-center-orb" id="orb-barge">
+            <div class="orb-halo"></div>
+            <div class="orb-core"></div>
+          </div>
+          <div class="listen-ring" id="listen-ring"></div>
+          <div class="barge-ripple" id="ripple-1"></div>
+          <div class="barge-ripple" id="ripple-2"></div>
+          <div class="barge-burst" id="barge-burst">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <svg id="wave-svg" viewBox="0 0 1920 1080" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="wg-archie" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#22d3ee" stop-opacity="0" />
+                <stop offset="0.25" stop-color="#22d3ee" />
+                <stop offset="1" stop-color="#22d3ee" stop-opacity="0.15" />
+              </linearGradient>
+              <linearGradient id="wg-user" x1="1" y1="0" x2="0" y2="0">
+                <stop offset="0" stop-color="#8b7cff" stop-opacity="0" />
+                <stop offset="0.25" stop-color="#8b7cff" />
+                <stop offset="1" stop-color="#8b7cff" stop-opacity="0.15" />
+              </linearGradient>
+            </defs>
+            <g id="wave-archie" opacity="0.9" data-layout-allow-overflow></g>
+            <g id="wave-user" opacity="0.9" data-layout-allow-overflow></g>
+          </svg>
+          <h2 class="barge-title" id="barge-title">Говорите. Перебивайте. <em>Он слушает.</em></h2>
+          <div data-layout-ignore class="wave-tag wave-tag--archie" id="tag-archie">Архи · отвечает</div>
+          <div data-layout-ignore class="wave-tag wave-tag--user" id="tag-user">Вы · перебиваете</div>
+          <div class="barge-flash" id="barge-flash"></div>
+        </div>
+      </section>
+
+      <!-- ============ СЦЕНА 3 · Z-SENSE · 15–23 ============ -->
+      <section id="scene-zsense" class="clip" data-start="15" data-duration="8">
+        <div class="zs-head" id="zs-head">
+          <div class="eyebrow" data-layout-ignore>Z-Sense · OCR экрана</div>
+          <h2 class="zs-title">Видит экран. <em>Понимает контекст.</em></h2>
+        </div>
+        <div class="zs-screen" id="zs-screen">
+          <div class="zs-screen-bar">
+            <span class="zs-dot" style="background: rgba(251, 113, 133, 0.7);"></span>
+            <span class="zs-dot" style="background: rgba(139, 124, 255, 0.7);"></span>
+            <span class="zs-dot" style="background: rgba(45, 212, 191, 0.7);"></span>
+          </div>
+          <div class="zs-body">
+            <div class="zs-line" style="--w: 42%;"><span class="zs-box" id="zs-box-1"></span></div>
+            <div class="zs-line" style="--w: 78%;"><span class="zs-box" id="zs-box-2"></span></div>
+            <div class="zs-line" style="--w: 58%;"><span class="zs-box" id="zs-box-3"></span></div>
+            <div class="zs-line" style="--w: 88%;"><span class="zs-box" id="zs-box-4"></span></div>
+            <div class="zs-line" style="--w: 35%;"><span class="zs-box" id="zs-box-5"></span></div>
+            <div class="zs-line" style="--w: 70%;"></div>
+            <div class="zs-line" style="--w: 52%;"></div>
+            <div class="zs-line" style="--w: 81%;"></div>
+            <div class="zs-line" style="--w: 47%;"></div>
+            <div class="zs-line" style="--w: 66%;"></div>
+          </div>
+          <div data-layout-allow-overflow class="zs-glitch zs-glitch--r" id="zs-glitch-r"></div>
+          <div data-layout-allow-overflow class="zs-glitch zs-glitch--b" id="zs-glitch-b"></div>
+          <div class="zs-scan-glow" id="zs-scan-glow"></div>
+          <div class="zs-scan" id="zs-scan"></div>
+          <span data-layout-ignore class="zs-chip" id="zs-chip-1" style="left: 120px; top: 108px;">код</span>
+          <span data-layout-ignore class="zs-chip" id="zs-chip-2" style="left: 480px; top: 152px;">почта</span>
+          <span data-layout-ignore class="zs-chip" id="zs-chip-3" style="left: 200px; top: 196px;">ошибка</span>
+          <span data-layout-ignore class="zs-chip" id="zs-chip-4" style="left: 560px; top: 240px;">дедлайн</span>
+          <span data-layout-ignore class="zs-chip" id="zs-chip-5" style="left: 300px; top: 284px;">git diff</span>
+        </div>
+        <div class="zs-orb" id="orb-zsense">
+          <div class="orb-halo"></div>
+          <div class="orb-core"></div>
+        </div>
+      </section>
+
+      <!-- ============ СЦЕНА 4 · ПАМЯТЬ · 23–33 ============ -->
+      <section id="scene-memory" class="clip" data-start="23" data-duration="10">
+        <div class="mem-head" id="mem-head" data-layout-allow-occlusion>
+          <div class="eyebrow" data-layout-ignore>Трёхуровневая память</div>
+          <h2 class="mem-title" data-layout-allow-occlusion>Помнит всё. Каждую ночь <em>становится умнее.</em></h2>
+        </div>
+        <div class="mem-layers">
+          <div class="mem-tier" id="tier-1" data-layout-allow-occlusion>
+            <h3 data-layout-ignore>Tier-1 · сейчас</h3>
+            <p><b id="ticker">фокус: дебаг стрима… переключился на почту… вернулся к коду…</b></p>
+          </div>
+          <div class="mem-thread" style="top: -20px;"></div>
+          <div class="mem-tier" id="tier-2" data-layout-allow-occlusion>
+            <h3 data-layout-ignore>Tier-2 · эпизоды</h3>
+            <div class="mem-cards">
+              <div class="mem-card" data-layout-ignore>утро · созвон</div>
+              <div class="mem-card" data-layout-ignore>14:20 · правки RFC</div>
+              <div class="mem-card" data-layout-ignore>18:05 · баг в TTS</div>
+              <div class="mem-card" data-layout-ignore>22:40 · дедлайн</div>
+            </div>
+          </div>
+          <div class="mem-thread" style="top: -20px;"></div>
+          <div class="mem-tier" id="tier-3" data-layout-allow-occlusion>
+            <h3 data-layout-ignore>Tier-3 · профиль</h3>
+            <p>Привычки, ритм, пороги — <b>узел, который растёт каждую ночь</b>.</p>
+          </div>
+        </div>
+        <svg class="mem-moon" id="mem-moon" viewBox="0 0 84 84" fill="none" aria-hidden="true">
+          <path d="M62 50 A26 26 0 1 1 34 10 A21 21 0 0 0 62 50 Z" fill="#a6adc4" opacity="0.9" />
+        </svg>
+        <svg class="mem-node" id="mem-node" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" stroke="#22d3ee" stroke-width="1.5" opacity="0.5" />
+          <circle cx="60" cy="60" r="34" stroke="#8b7cff" stroke-width="1.5" opacity="0.6" />
+          <circle cx="60" cy="60" r="10" fill="#22d3ee" />
+          <circle cx="60" cy="14" r="5" fill="#8b7cff" />
+          <circle cx="106" cy="60" r="5" fill="#8b7cff" />
+          <circle cx="60" cy="106" r="5" fill="#8b7cff" />
+          <circle cx="14" cy="60" r="5" fill="#8b7cff" />
+          <path d="M60 19 V50 M101 60 H70 M60 101 V70 M19 60 H50" stroke="#8b7cff" stroke-width="1.2" opacity="0.55" />
+        </svg>
+        <div class="mem-stars" id="mem-stars" aria-hidden="true">
+          <i style="left: 12%; top: 18%;"></i>
+          <i style="left: 24%; top: 32%;"></i>
+          <i style="left: 36%; top: 12%;"></i>
+          <i style="left: 48%; top: 26%;"></i>
+          <i style="left: 58%; top: 40%;"></i>
+          <i style="left: 66%; top: 14%;"></i>
+          <i style="left: 74%; top: 34%;"></i>
+          <i style="left: 82%; top: 20%;"></i>
+          <i style="left: 90%; top: 44%;"></i>
+          <i style="left: 18%; top: 52%;"></i>
+          <i style="left: 42%; top: 58%;"></i>
+          <i style="left: 70%; top: 56%;"></i>
+          <i style="left: 86%; top: 62%;"></i>
+          <i style="left: 30%; top: 44%;"></i>
+          <i style="left: 54%; top: 8%;"></i>
+          <i style="left: 8%;  top: 38%;"></i>
+        </div>
+        <div class="mem-sparks" aria-hidden="true">
+          <i style="left: 44%; width: 6px; height: 6px;"></i>
+          <i style="left: 51%; width: 4px; height: 4px;"></i>
+          <i style="left: 58%; width: 5px; height: 5px;"></i>
+          <i style="left: 64%; width: 4px; height: 4px;"></i>
+          <i style="left: 70%; width: 6px; height: 6px;"></i>
+        </div>
+        <div class="mem-night" id="mem-night"></div>
+      </section>
+
+      <!-- ============ СЦЕНА 5 · S(t) · 33–41 ============ -->
+      <section id="scene-stress" class="clip" data-start="33" data-duration="8">
+        <div class="st-left" id="st-left">
+          <div class="eyebrow" data-layout-ignore>Индекс фрустрации S(t)</div>
+          <h2 class="st-title">Чувствует, когда тяжело. <em>Умеет промолчать.</em></h2>
+          <p class="st-sub">Пик стресса — и <b>экспоненциальный полураспад</b>. Арчи держит паузу, пока вы не выдохнете. Как старший брат: рядом, но не над душой.</p>
+        </div>
+        <div class="st-chart" id="st-chart">
+          <svg id="st-svg" viewBox="0 0 1000 560" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="st-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8b7cff" stop-opacity="0.42" />
+                <stop offset="1" stop-color="#8b7cff" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="st-stroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#22d3ee" />
+                <stop offset="0.35" stop-color="#fb7185" />
+                <stop offset="1" stop-color="#8b7cff" />
+              </linearGradient>
+            </defs>
+            <line x1="60" y1="40" x2="60" y2="500" stroke="#a6adc4" stroke-width="1" opacity="0.35" />
+            <line x1="60" y1="500" x2="960" y2="500" stroke="#a6adc4" stroke-width="1" opacity="0.35" />
+            <line x1="60" y1="180" x2="960" y2="180" stroke="#a6adc4" stroke-width="1" stroke-dasharray="6 8" opacity="0.3" />
+            <line x1="60" y1="340" x2="960" y2="340" stroke="#a6adc4" stroke-width="1" stroke-dasharray="6 8" opacity="0.3" />
+            <path id="st-area" d="" fill="url(#st-fill)" opacity="0" />
+            <path id="st-curve" d="" stroke="url(#st-stroke)" stroke-width="4.5" stroke-linecap="round" fill="none" />
+          </svg>
+          <span data-layout-ignore class="st-axis-label" style="left: 8px; top: 160px;">½</span>
+          <span data-layout-ignore class="st-axis-label" style="left: 8px; top: 320px;">¼</span>
+          <span data-layout-ignore class="st-axis-label" style="left: 20px; top: 20px;">S(t)</span>
+          <span data-layout-ignore class="st-axis-label" style="right: 6px; top: 512px;">t</span>
+        </div>
+        <div class="st-orb" id="orb-stress">
+          <div class="orb-halo"></div>
+          <div class="orb-core"></div>
+        </div>
+        <div class="st-pulse" id="st-pulse"></div>
+      </section>
+
+      <!-- ============ СЦЕНА 6 · ЩИТ · 41–50 ============ -->
+      <section id="scene-shield" class="clip" data-start="41" data-duration="9">
+        <div class="shield-stage" id="shield-stage">
+          <div class="shield-orb" id="orb-shield">
+            <div class="orb-halo"></div>
+            <div class="orb-core"></div>
+          </div>
+          <div class="shield-glass" id="shield-glass"></div>
+          <div class="shield-cloud" id="shield-cloud">
+            <div class="cloud-row">
+              <svg width="46" height="30" viewBox="0 0 46 30" fill="none" aria-hidden="true">
+                <path d="M12 26 h24 a7 7 0 0 0 1-13.9 A11 11 0 0 0 15.6 9.2 8 8 0 0 0 12 26 Z" stroke="#a6adc4" stroke-width="2" fill="rgba(166,173,196,0.08)" />
+              </svg>
+              <span data-layout-ignore class="lbl">облако — <em>отдельный</em> LLM-контур</span>
+              <span class="toggle" aria-hidden="true"></span>
+            </div>
+            <div class="cloud-link"></div>
+            <div class="cloud-boundary" data-layout-ignore id="sh-boundary">санированный текстовый контекст</div>
+          </div>
+          <span data-layout-ignore class="shield-label" id="sh-lbl-1" style="left: -70px; top: 120px;">сенсорика · память</span>
+          <span data-layout-ignore class="shield-label" id="sh-lbl-2" style="right: -80px; top: 200px;">ваша машина</span>
+          <span data-layout-ignore class="shield-label" id="sh-lbl-3" style="left: -40px; bottom: 110px;">PII-обработка локально</span>
+          <span data-layout-ignore class="shield-label" id="sh-lbl-4" style="right: -60px; bottom: 150px;">офлайн-фолбэк</span>
+        </div>
+        <h2 class="sh-title" id="sh-title">Локально — по умолчанию. Облако — <em>отдельный LLM-контур</em>, санирующий текстовый контекст.</h2>
+      </section>
+
+      <!-- ============ СЦЕНА 7 · ФИНАЛ · 50–60 ============ -->
+      <section id="scene-final" class="clip" data-start="50" data-duration="10">
+        <div class="fin-threads" data-layout-allow-overflow>
+          <div class="fin-thread" style="transform: rotate(200deg);"></div>
+          <div class="fin-thread" style="transform: rotate(340deg);"></div>
+          <div class="fin-thread" style="transform: rotate(160deg);"></div>
+          <div class="fin-thread" style="transform: rotate(20deg);"></div>
+          <div class="fin-thread" style="transform: rotate(90deg);"></div>
+          <div class="fin-thread" style="transform: rotate(270deg);"></div>
+        </div>
+        <div class="fin-sparks" data-layout-allow-overflow id="fin-sparks">
+          <div class="fin-spark-arm" style="transform: rotate(0deg);"><i style="transform: translateX(780px);"></i></div>
+          <div class="fin-spark-arm" style="transform: rotate(60deg);"><i style="transform: translateX(830px);"></i></div>
+          <div class="fin-spark-arm" style="transform: rotate(120deg);"><i style="transform: translateX(760px);"></i></div>
+          <div class="fin-spark-arm" style="transform: rotate(180deg);"><i style="transform: translateX(850px);"></i></div>
+          <div class="fin-spark-arm" style="transform: rotate(240deg);"><i style="transform: translateX(790px);"></i></div>
+          <div class="fin-spark-arm" style="transform: rotate(300deg);"><i style="transform: translateX(820px);"></i></div>
+        </div>
+        <div class="fin-orb" id="orb-final">
+          <div class="fin-ring" id="fin-ring-1"></div>
+          <div class="fin-ring" id="fin-ring-2"></div>
+          <div class="orb-halo"></div>
+          <div class="orb-core"></div>
+        </div>
+        <h2 class="fin-slogan" id="fin-slogan">Архи. Напарник, который уже рядом.</h2>
+        <p class="fin-manifest" id="fin-manifest">Локальная сенсорика, память, PII-обработка и офлайн-фолбэк. Облачный LLM — отдельно, по вашей конфигурации.</p>
+        <div class="fin-cta" id="fin-cta"><span class="dot"></span>Настроить Архи</div>
+        <div data-layout-ignore data-layout-allow-occlusion class="fin-stack" id="fin-stack">EDGE SENSING · MEMORY · CLOUD LLM OPT-IN · MOCK FALLBACK</div>
+        <div class="fin-vignette" id="fin-vignette"></div>
+      </section>
+
+      <!-- переходные свипы -->
+      <div class="wipe wipe--cyan" id="wipe-1"></div>
+      <div class="wipe wipe--violet" id="wipe-2"></div>
+      <div class="wipe wipe--teal" id="wipe-3"></div>
+      <div class="wipe wipe--ink" id="wipe-4"></div>
+      <div class="wipe wipe--cyan" id="wipe-5"></div>
+      <div class="wipe wipe--violet" id="wipe-6"></div>
+
+      <!-- плёночное зерно поверх всего -->
+      <svg id="grain" aria-hidden="true">
+        <filter id="grain-f">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="1920" height="1080" filter="url(#grain-f)" />
+      </svg>
+
+      <!-- ТИТРЫ -->
+      <div id="captions">
+        <div class="cap" data-layout-ignore id="cap-1">Знакомьтесь — <b>Архи</b>. Автономный напарник, который живёт внутри вашего компьютера.</div>
+        <div class="cap" data-layout-ignore id="cap-2">Говорите, как с человеком: <i>перебивайте</i>, уточняйте — он отвечает вживую, без кнопок.</div>
+        <div class="cap" data-layout-ignore id="cap-3">Архи видит экран локально: сырые кадры остаются на устройстве; через облачный boundary допускается только санированный текстовый контекст при включённых и проверенных sanitizer/egress-контролях.</div>
+        <div class="cap" data-layout-ignore id="cap-4">Он помнит всё — а ночью тихо <b>переосмысливает день</b>.</div>
+        <div class="cap" data-layout-ignore id="cap-5">Чувствует, когда вам тяжело, — и умеет <i>вовремя промолчать</i>.</div>
+        <div class="cap" data-layout-ignore id="cap-6">Сырые кадры экрана и аудио должны оставаться локально. Через облачный boundary допускается только санированный текст — при включённых и проверенных sanitizer/egress-контролях.</div>
+        <div class="cap" data-layout-ignore id="cap-7"><b>Архи.</b> Напарник, который уже рядом.</div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================================
+      // Archie · 60s promo · единая seekable-таймлайн (HyperFrames)
+      // Детерминизм: никакого Math.random — все значения зафиксированы.
+      // ============================================================
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ---------- вспомогательное: SVG-волны (детерминированные синусы) ----------
+      function buildWave(gid, strokeUrl, width) {
+        const g = document.getElementById(gid);
+        const NS = "http://www.w3.org/2000/svg";
+        for (let p = 0; p < 3; p++) {
+          const path = document.createElementNS(NS, "path");
+          path.setAttribute("stroke", strokeUrl);
+          path.setAttribute("stroke-width", String(width - p));
+          path.setAttribute("opacity", String(0.9 - p * 0.28));
+          g.appendChild(path);
+        }
+      }
+      buildWave("wave-archie", "url(#wg-archie)", 5);
+      buildWave("wave-user", "url(#wg-user)", 5);
+
+      // Пересчёт волн как функция времени — вызывается onUpdate мастер-твина,
+      // поэтому seek-safe: состояние полностью определяется tl.time().
+      const waveState = { userBoost: 0, archieMute: 1 };
+      const waveArchiePaths = document.querySelectorAll("#wave-archie path");
+      const waveUserPaths = document.querySelectorAll("#wave-user path");
+
+      function wavePathD(t, amp, phase, dir, cx) {
+        // волна течёт от своего края к центру кадра (cx)
+        const x0 = dir > 0 ? -60 : 1980;
+        const x1 = cx;
+        const step = 26;
+        let d = "";
+        for (let x = x0; dir > 0 ? x <= x1 : x >= x1; x += dir > 0 ? step : -step) {
+          const prog = dir > 0 ? (x - x0) / (x1 - x0) : (x0 - x) / (x0 - x1);
+          const env = Math.sin(prog * Math.PI); // огибающая — тишина на краях
+          const y = 540 + Math.sin(x * 0.02 + t * 3.1 + phase) * amp * env
+                        + Math.sin(x * 0.043 - t * 5.2 + phase * 2.0) * amp * 0.4 * env;
+          d += (d === "" ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1);
+        }
+        return d;
+      }
+
+      function renderWaves(t) {
+        const aA = 26 * waveState.archieMute;
+        const aU = 22 + 64 * waveState.userBoost;
+        for (let p = 0; p < 3; p++) {
+          waveArchiePaths[p].setAttribute("d", wavePathD(t, aA * (1 - p * 0.25), p * 1.7, 1, 830 - p * 14));
+          waveUserPaths[p].setAttribute("d", wavePathD(t, aU * (1 - p * 0.25), p * 1.3, -1, 1090 + p * 14));
+        }
+      }
+
+      // мастер-драйвер кадра (один твин на всю длительность)
+      const frame = { t: 0 };
+      tl.to(frame, {
+        t: 60, duration: 60, ease: "none",
+        onUpdate() { renderWaves(frame.t); }
+      }, 0);
+
+      // ---------- сквозное дыхание фона ----------
+      tl.fromTo("#bg-grid", { scale: 1 }, { scale: 1.045, duration: 8, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
+
+      // ============================================================
+      // СЦЕНА 1 · ORB AWAKENING (0–6)
+      // ============================================================
+      tl.fromTo("#orb-hero", { opacity: 0.92, scale: 0.88 }, { opacity: 1, scale: 1, duration: 1.2, ease: "power2.out" }, 0.0);
+      // вспышка зажигания: радиальная вспышка + расходящееся кольцо
+      tl.fromTo("#ignition-flash", { opacity: 0, scale: 0.4 },
+        { opacity: 0.85, scale: 1.1, duration: 0.22, ease: "power3.out" }, 0.55);
+      tl.to("#ignition-flash", { opacity: 0, scale: 1.7, duration: 0.7, ease: "power2.out" }, 0.77);
+      tl.fromTo("#ignition-ring", { opacity: 0.95, scale: 0.25 },
+        { opacity: 0, scale: 4.6, duration: 1.15, ease: "power2.out" }, 0.55);
+      // «вдох» 4 с: 0.9 → 1.05
+      tl.to("#orb-hero", { scale: 1.05, duration: 2, ease: "sine.inOut" }, 2.0);
+      tl.to("#orb-hero", { scale: 0.96, duration: 2, ease: "sine.inOut" }, 4.0);
+      tl.fromTo("#orb-hero .orb-ring", { rotation: 0 }, { rotation: 360, duration: 60, ease: "none" }, 0);
+      // второе орбитальное кольцо — противоход, лучи — медленное вращение
+      tl.fromTo("#orb-hero .orb-ring2", { rotation: 0 }, { rotation: -360, duration: 60, ease: "none" }, 0);
+      tl.fromTo("#orb-rays", { rotation: 0 }, { rotation: 26, duration: 60, ease: "none" }, 0);
+      // дальние эхо-орбы — детерминированный параллакс-дрейф (разная глубина)
+      document.querySelectorAll("#scene-orb .echo-orb").forEach((el, i) => {
+        tl.fromTo(el, { y: 0 }, { y: -26 - i * 12, duration: 6, ease: "sine.inOut" }, 0);
+      });
+      // буквы ARCHIE — посимвольный blur-in, stagger 60ms
+      tl.fromTo("#hero-title .ltr",
+        { opacity: 1, y: 0, filter: "blur(0px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", stagger: 0.06 }, 1.15);
+      // лёгкий шиммер по буквам (вместо входа — заголовок уже виден в кадре 0)
+      tl.fromTo("#hero-title .ltr",
+        { filter: "blur(0px) brightness(1)" },
+        { filter: "blur(0px) brightness(1.35)", duration: 0.35, ease: "sine.inOut", yoyo: true, repeat: 1, stagger: 0.06 }, 1.15);
+      tl.fromTo("#hero-sub", { opacity: 0.0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.4);
+      // пылинки — детерминированный дрейф вверх
+      document.querySelectorAll("#dust i").forEach((el, i) => {
+        const h = 420 + i * 57;              // высота подъёма
+        const dx = (i % 3 - 1) * 60;         // боковой дрейф
+        const delay = 0.4 + i * 0.33;
+        tl.fromTo(el,
+          { y: 0, x: 0, opacity: 0 },
+          { y: -h, x: dx, opacity: 0.8, duration: 2.4, ease: "sine.out" }, delay);
+        tl.to(el, { opacity: 0, duration: 0.8, ease: "sine.in" }, delay + 2.0);
+      });
+      // уход сцены 1
+      tl.to("#scene-orb", { opacity: 0, scale: 0.97, duration: 0.5, ease: "power2.in" }, 5.5);
+
+      // ============================================================
+      // СЦЕНА 2 · BARGE-IN (6–15)
+      // ============================================================
+      wipe("#wipe-1", 5.6);
+      tl.fromTo("#scene-barge", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 5.95);
+      tl.fromTo("#barge-zoom", { scale: 1 }, { scale: 1.06, duration: 9, ease: "sine.inOut" }, 6.0);
+      tl.fromTo("#orb-barge", { opacity: 0, scale: 0.8 }, { opacity: 0.85, scale: 1, duration: 0.7, ease: "power2.out" }, 6.1);
+      tl.fromTo("#barge-title",
+        { opacity: 0, y: 50, clipPath: "inset(0 0 100% 0)" },
+        { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.7, ease: "power3.out" }, 6.5);
+      tl.fromTo(["#tag-archie", "#tag-user"], { opacity: 0 }, { opacity: 1, duration: 0.5, stagger: 0.2 }, 7.0);
+      // подписи дышат, чтобы теги не стояли мёртво
+      tl.to("#tag-archie", { opacity: 0.62, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 6 }, 7.5);
+      tl.to("#tag-user", { opacity: 0.62, duration: 1.3, ease: "sine.inOut", yoyo: true, repeat: 5 }, 7.7);
+      // В 9.0 — перебивание: волна пользователя резко нарастает, Архи гаснет за 200мс
+      tl.to(waveState, { userBoost: 1, duration: 0.35, ease: "power3.out" }, 9.0);
+      tl.to(waveState, { archieMute: 0.06, duration: 0.2, ease: "power4.out" }, 9.0);
+      // микро-тряска кадра на момент перебития — «удар» по камере (перезаписывает зум не ломая его)
+      tl.fromTo("#barge-zoom", { x: 0, y: 0 },
+        { x: 10, y: -7, duration: 0.055, ease: "power1.inOut", yoyo: true, repeat: 3 }, 9.02);
+      tl.to("#barge-zoom", { x: 0, y: 0, duration: 0.24, ease: "power2.out" }, 9.24);
+      // орб «прислушивается»: тускнеет и сжимается на 8%
+      tl.to("#orb-barge", { opacity: 0.4, scale: 0.92, duration: 0.25, ease: "power2.out" }, 9.0);
+      tl.fromTo("#barge-flash", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out" }, 9.05);
+      tl.to("#barge-flash", { opacity: 0, duration: 0.6, ease: "power2.in" }, 9.2);
+      // вспышка-осколки из точки перебития + ударная рябь (двойная)
+      document.querySelectorAll("#barge-burst i").forEach((el, i) => {
+        const ang = (i / 8) * Math.PI * 2 + 0.39;
+        tl.fromTo(el,
+          { opacity: 0.95, x: 0, y: 0 },
+          { opacity: 0, x: Math.cos(ang) * 170, y: Math.sin(ang) * 96, duration: 0.55, ease: "power2.out" }, 9.02);
+      });
+      tl.fromTo("#ripple-1", { opacity: 0.9, scale: 0.2 }, { opacity: 0, scale: 5.6, duration: 0.8, ease: "power2.out" }, 9.02);
+      tl.fromTo("#ripple-2", { opacity: 0.7, scale: 0.2 }, { opacity: 0, scale: 4.2, duration: 0.7, ease: "power2.out" }, 9.22);
+      // кольцо «слушает» — медленно вращается, пока Архи молчит
+      tl.fromTo("#listen-ring", { opacity: 0, scale: 0.8 }, { opacity: 0.85, scale: 1, duration: 0.4, ease: "power2.out" }, 9.35);
+      tl.fromTo("#listen-ring", { rotation: 0 }, { rotation: 160, duration: 3.6, ease: "none" }, 9.35);
+      tl.to("#listen-ring", { opacity: 0, duration: 0.5, ease: "power2.in" }, 12.5);
+      // подчеркнуть момент: тег пользователя загорается, тег Архи гаснет
+      tl.to("#tag-user", { scale: 1.16, duration: 0.22, ease: "power2.out", transformOrigin: "right center" }, 9.05);
+      tl.to("#tag-user", { scale: 1, duration: 0.5, ease: "sine.inOut" }, 9.8);
+      tl.to("#tag-archie", { opacity: 0.28, duration: 0.3, overwrite: "auto" }, 9.05);
+      tl.to("#tag-archie", { opacity: 1, duration: 0.6, ease: "sine.inOut", overwrite: "auto" }, 11.6);
+      // пользовательская волна успокаивается, Архи возвращается
+      tl.to(waveState, { userBoost: 0.15, duration: 1.4, ease: "sine.inOut" }, 10.6);
+      tl.to(waveState, { archieMute: 1, duration: 1.1, ease: "sine.inOut" }, 11.4);
+      tl.to("#orb-barge", { opacity: 0.85, scale: 1, duration: 1.0, ease: "sine.inOut" }, 11.4);
+      tl.to("#scene-barge", { opacity: 0, duration: 0.45, ease: "power2.in" }, 14.5);
+
+      // ============================================================
+      // СЦЕНА 3 · Z-SENSE (15–23)
+      // ============================================================
+      wipe("#wipe-2", 14.6);
+      tl.fromTo("#scene-zsense", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 14.95);
+      tl.fromTo("#zs-head",
+        { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" }, 15.3);
+      tl.fromTo("#zs-screen", { opacity: 0, y: 60, rotationY: -7, transformPerspective: 1400 },
+        { opacity: 1, y: 0, rotationY: 0, duration: 0.8, ease: "power3.out" }, 15.4);
+      tl.fromTo("#orb-zsense", { opacity: 0 }, { opacity: 0.9, duration: 0.6 }, 15.8);
+      // орб-наблюдатель дышит (параллакс-пульс)
+      tl.to("#orb-zsense", { scale: 1.05, duration: 1.8, ease: "sine.inOut", yoyo: true, repeat: 3 }, 16.4);
+      // сканирующая линия сверху вниз + световой шлейф
+      tl.set("#zs-scan", { opacity: 1 }, 16.0);
+      tl.fromTo("#zs-scan", { y: 0 }, { y: 768, duration: 3.4, ease: "none" }, 16.0);
+      tl.to("#zs-scan", { opacity: 0, duration: 0.3 }, 19.4);
+      tl.set("#zs-scan-glow", { opacity: 1 }, 16.0);
+      tl.fromTo("#zs-scan-glow", { y: 0 }, { y: 768, duration: 3.4, ease: "none" }, 16.0);
+      tl.to("#zs-scan-glow", { opacity: 0, duration: 0.3 }, 19.4);
+      // хроматический глитч: два смещённых канала следуют за линией сканирования
+      tl.set(["#zs-glitch-r", "#zs-glitch-b"], { opacity: 0.55 }, 16.0);
+      tl.fromTo(["#zs-glitch-r", "#zs-glitch-b"], { y: 0 }, { y: 768, duration: 3.4, ease: "none" }, 16.0);
+      tl.to(["#zs-glitch-r", "#zs-glitch-b"], { opacity: 0, duration: 0.3 }, 19.4);
+      // пульс-сдвиг каналов: детерминированные «рывки» каждые ~0.42 с
+      const zsGlitchOffsets = [[7, -7], [-6, 6], [9, -9], [-5, 5], [8, -8], [-7, 7], [4, -4]];
+      zsGlitchOffsets.forEach(([xr, xb], i) => {
+        const at = 16.1 + i * 0.42;
+        tl.set("#zs-glitch-r", { x: xr }, at);
+        tl.set("#zs-glitch-b", { x: xb }, at);
+      });
+      tl.set("#zs-glitch-r", { x: 0 }, 19.35);
+      tl.set("#zs-glitch-b", { x: 0 }, 19.35);
+      // OCR-рамки + теги по ходу сканирования
+      const zsTiming = [
+        ["#zs-box-1", "#zs-chip-1", 16.3],
+        ["#zs-box-2", "#zs-chip-2", 16.9],
+        ["#zs-box-3", "#zs-chip-3", 17.5],
+        ["#zs-box-4", "#zs-chip-4", 18.1],
+        ["#zs-box-5", "#zs-chip-5", 18.7]
+      ];
+      zsTiming.forEach(([box, chip, at]) => {
+        tl.fromTo(box, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, at);
+        tl.fromTo(chip, { opacity: 0, y: 12, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, at + 0.12);
+      });
+      tl.to("#scene-zsense", { opacity: 0, y: -40, duration: 0.5, ease: "power2.in" }, 22.5);
+
+      // ============================================================
+      // СЦЕНА 4 · ПАМЯТЬ + НОЧЬ (23–33)
+      // ============================================================
+      wipe("#wipe-3", 22.6);
+      tl.fromTo("#scene-memory", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 22.95);
+      tl.fromTo("#mem-head", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 23.3);
+      tl.fromTo(["#tier-3", "#tier-2", "#tier-1"],
+        { opacity: 0, y: 70 },
+        { opacity: 1, y: 0, duration: 0.65, ease: "power3.out", stagger: 0.22 }, 23.8);
+      // световые нити между слоями
+      tl.to(".mem-thread", { opacity: 1, duration: 0.4, stagger: 0.15 }, 24.6);
+      // живой тикер Tier-1 (детерминированная ротация фраз)
+      const tickerEl = document.getElementById("ticker");
+      const tickerPhrases = [
+        "фокус: дебаг стрима… переключился на почту… вернулся к коду…",
+        "25 минут без перерыва… три подряд ошибки сборки…",
+        "музыка выключена, телеграм молчит — глубокая работа…"
+      ];
+      const tick = { i: 0 };
+      tl.to(tick, {
+        i: tickerPhrases.length - 1, duration: 5.0, ease: "steps(" + (tickerPhrases.length - 1) + ")",
+        onUpdate() { tickerEl.textContent = tickerPhrases[Math.round(tick.i)]; }
+      }, 24.0);
+      // карточки Tier-2 мягко перетасовываются
+      document.querySelectorAll("#tier-2 .mem-card").forEach((el, i) => {
+        tl.to(el, { y: i % 2 === 0 ? -6 : 6, duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 3 }, 24.5 + i * 0.3);
+      });
+      // 29.0 — ночь: лунная синева, полумесяц, rebuild
+      tl.to("#mem-night", { opacity: 1, duration: 1.2, ease: "sine.inOut" }, 29.0);
+      tl.fromTo("#mem-moon", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 29.3);
+      // карточки Tier-2 стекают вниз и переплавляются в узел Tier-3
+      tl.to("#tier-2 .mem-card", { y: 150, opacity: 0, scale: 0.7, duration: 1.1, ease: "power2.in", stagger: 0.12 }, 29.8);
+      tl.fromTo("#mem-node", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.9, ease: "back.out(1.6)" }, 30.8);
+      tl.to("#mem-node", { filter: "drop-shadow(0 0 26px rgba(34, 211, 238, 0.85))", duration: 0.8, ease: "sine.inOut" }, 31.7);
+      // звёздная пыль: мерцает в ночи rebuild, детерминированный twinkle.
+      // плавный fade-in с синхронным yoyo-мерцанием (repeat 3 ≈ 29.9→31.7),
+      // затем единый fade-out в 32.2 — без ступенчатых set-прыжков
+      document.querySelectorAll(".mem-stars i").forEach((el, i) => {
+        const peak = 0.5 + (i % 4) * 0.12;
+        const low = 0.14 + (i % 3) * 0.06;
+        const at = 29.0 + i * 0.085;
+        tl.fromTo(el, { opacity: 0 }, { opacity: peak, duration: 0.5, ease: "sine.inOut" }, at);
+        tl.to(el, { opacity: low, duration: 0.6 + (i % 3) * 0.12, ease: "sine.inOut", yoyo: true, repeat: 3 }, at + 0.55);
+        tl.to(el, { opacity: 0, duration: 0.7, ease: "sine.in" }, 32.15 + (i % 5) * 0.06);
+      });
+      // ночные искры поднимаются к узлу во время rebuild
+      document.querySelectorAll(".mem-sparks i").forEach((el, i) => {
+        tl.fromTo(el,
+          { opacity: 0, y: 0, x: 0 },
+          { opacity: 0.85, y: -(200 + i * 46), x: 26 + i * 16, duration: 1.3, ease: "sine.out" }, 29.7 + i * 0.22);
+        tl.to(el, { opacity: 0, duration: 0.6, ease: "sine.in" }, 31.0 + i * 0.22);
+      });
+      // утро — свет возвращается
+      tl.to("#mem-night", { opacity: 0.25, duration: 1.0, ease: "sine.inOut" }, 31.6);
+      tl.to("#scene-memory", { opacity: 0, duration: 0.45, ease: "power2.in" }, 32.55);
+
+      // ============================================================
+      // СЦЕНА 5 · S(t) ГРАФИК (33–41)
+      // ============================================================
+      wipe("#wipe-4", 32.6);
+      tl.fromTo("#scene-stress", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 32.95);
+      tl.fromTo("#st-left", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }, 33.3);
+      tl.fromTo("#st-chart", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 33.5);
+
+      // Кривая S(t): резкий рост → экспоненциальный полураспад (детерминированная)
+      (function buildCurve() {
+        const pts = [];
+        const areaPts = [];
+        for (let i = 0; i <= 90; i++) {
+          const u = i / 90;                       // 0..1 по оси t
+          const x = 60 + u * 900;
+          let s;
+          if (u < 0.18) {
+            s = Math.pow(u / 0.18, 2.2) * 0.96;   // взлёт
+          } else {
+            s = 0.96 * Math.pow(0.5, (u - 0.18) / 0.155); // полураспад
+          }
+          s += 0.035 * Math.sin(u * 47) * Math.exp(-u * 2.5); // мелкое дрожание пика
+          const y = 500 - s * 400;
+          pts.push((i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1));
+          areaPts.push((i === 0 ? "M60 500L" : "L") + x.toFixed(1) + " " + y.toFixed(1));
+        }
+        areaPts.push("L960 500Z");
+        const curve = document.getElementById("st-curve");
+        const area = document.getElementById("st-area");
+        curve.setAttribute("d", pts.join(""));
+        area.setAttribute("d", areaPts.join(""));
+        const len = curve.getTotalLength();
+        curve.style.strokeDasharray = String(len);
+        curve.style.strokeDashoffset = String(len);
+        tl.to(curve, { strokeDashoffset: 0, duration: 4.6, ease: "power1.inOut" }, 33.9);
+        tl.to(area, { opacity: 1, duration: 4.6, ease: "power1.inOut" }, 33.9);
+        // точка-маркер на пике кривой (x=222, y=116 — вершина S(t))
+        const NS2 = "http://www.w3.org/2000/svg";
+        const dot = document.createElementNS(NS2, "circle");
+        dot.setAttribute("id", "st-peak-dot");
+        dot.setAttribute("cx", "222");
+        dot.setAttribute("cy", "116");
+        dot.setAttribute("r", "7");
+        dot.setAttribute("fill", "#fb7185");
+        dot.setAttribute("opacity", "0");
+        curve.parentNode.appendChild(dot);
+        tl.to(dot, { opacity: 1, duration: 0.25 }, 34.75);
+        tl.to(dot, { attr: { r: 13 }, opacity: 0.25, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 3 }, 34.9);
+        tl.to(dot, { attr: { r: 7 }, opacity: 0.85, duration: 0.5, ease: "sine.inOut" }, 37.2);
+      })();
+
+      // орб: напряжённо пульсирует на пике, успокаивается на спаде
+      tl.fromTo("#orb-stress", { opacity: 0 }, { opacity: 0.9, duration: 0.5 }, 33.6);
+      // фон сцены пульсирует в такт напряжению S(t): нарастает к пику, затухает на полураспаде
+      tl.fromTo("#st-pulse", { opacity: 0 }, { opacity: 0.85, duration: 1.15, ease: "power2.in" }, 33.6);
+      tl.to("#st-pulse", { opacity: 0.5, duration: 0.28, ease: "sine.inOut", yoyo: true, repeat: 7 }, 34.75);
+      tl.to("#st-pulse", { opacity: 0, duration: 2.6, ease: "sine.out" }, 37.1);
+      tl.to("#orb-stress", { scale: 1.09, duration: 0.28, ease: "sine.inOut", yoyo: true, repeat: 7 }, 34.4);
+      tl.to("#orb-stress .orb-halo", { opacity: 0.55, duration: 0.8, ease: "sine.inOut" }, 36.9);
+      tl.to("#orb-stress", { scale: 1.02, duration: 1.6, ease: "sine.inOut" }, 37.0);
+      tl.to("#scene-stress", { opacity: 0, duration: 0.45, ease: "power2.in" }, 40.55);
+
+      // ============================================================
+      // СЦЕНА 6 · ЩИТ ПРИВАТНОСТИ (41–50)
+      // ============================================================
+      wipe("#wipe-5", 40.6);
+      tl.fromTo("#scene-shield", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 40.95);
+      tl.fromTo("#orb-shield", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, 41.2);
+      // щит замыкается вокруг орба
+      tl.fromTo("#shield-glass", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" }, 41.9);
+      // Ken Burns — одна плавная камера
+      tl.fromTo("#shield-stage", { scale: 1.0 }, { scale: 1.05, duration: 9, ease: "sine.inOut" }, 41.0);
+      // кольцо подписей
+      tl.fromTo(["#sh-lbl-1", "#sh-lbl-2", "#sh-lbl-3", "#sh-lbl-4"],
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.3 }, 42.6);
+      // лёгкая парящая кинетика подписей
+      document.querySelectorAll(".shield-label").forEach((el, i) => {
+        tl.to(el, { y: (i % 2 === 0 ? -7 : 7), duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 2 }, 43.4 + i * 0.25);
+      });
+      tl.fromTo("#sh-boundary", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 44.65);
+      // щит едва дышит — защита живая
+      tl.to("#shield-glass", { scale: 1.018, duration: 1.9, ease: "sine.inOut", yoyo: true, repeat: 2 }, 43.2);
+      // облако opt-in сверху
+      tl.fromTo("#shield-cloud", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 44.0);
+      tl.fromTo("#sh-title", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, 43.0);
+      tl.to("#scene-shield", { opacity: 0, scale: 0.98, duration: 0.5, ease: "power2.in" }, 49.5);
+
+      // ============================================================
+      // СЦЕНА 7 · ФИНАЛ (50–60)
+      // ============================================================
+      wipe("#wipe-6", 49.6);
+      tl.fromTo("#scene-final", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 49.95);
+      // световые нити втягиваются в орб
+      tl.fromTo(".fin-thread",
+        { opacity: 0.8, scaleX: 1 },
+        { opacity: 0, scaleX: 0.02, duration: 1.1, ease: "power3.in", stagger: 0.07 }, 50.2);
+      // орб «плотнеет»
+      // искры по шести лучам летят к центру и гаснут в орбе — «мотивы схлопываются»
+      document.querySelectorAll("#fin-sparks .fin-spark-arm i").forEach((el, i) => {
+        tl.fromTo(el,
+          { opacity: 0, x: 0 },
+          { opacity: 0.95, duration: 0.14, ease: "power1.out" }, 50.15 + i * 0.06);
+        tl.to(el, { x: -720 - (i % 3) * 40, duration: 0.85, ease: "power3.in" }, 50.15 + i * 0.06);
+        tl.to(el, { opacity: 0, duration: 0.2, ease: "power1.in" }, 50.85 + i * 0.06);
+      });
+      tl.fromTo("#orb-final", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }, 50.6);
+      // расходящиеся кольца-отклик на «схлопывание» мотивов
+      tl.fromTo("#fin-ring-1", { opacity: 0.75, scale: 0.55 }, { opacity: 0, scale: 2.5, duration: 1.5, ease: "power2.out" }, 51.0);
+      tl.fromTo("#fin-ring-2", { opacity: 0.55, scale: 0.55 }, { opacity: 0, scale: 3.1, duration: 1.8, ease: "power2.out" }, 51.25);
+      tl.to("#orb-final .orb-core", { boxShadow: "0 0 90px -8px rgba(34,211,238,0.7), 0 0 190px -30px rgba(139,124,255,0.9), inset 0 0 50px rgba(139,124,255,0.6), inset -24px -30px 80px rgba(7,8,15,0.85)", duration: 0.9, ease: "sine.inOut" }, 51.4);
+      tl.fromTo("#fin-slogan", { opacity: 0, y: 40, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out" }, 51.6);
+      tl.fromTo("#fin-manifest", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 52.6);
+      tl.fromTo("#fin-cta", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.8)" }, 53.4);
+      tl.fromTo("#fin-stack", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 54.2);
+      // орб продолжает дышать, пока читаем слоган (медленный цикл 3 с)
+      tl.to("#orb-final", { scale: 1.035, duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 3 }, 54.5);
+      // последняя секунда — орб дышит в темноте
+      tl.to(["#fin-slogan", "#fin-manifest", "#fin-cta", "#fin-stack"], { opacity: 0, duration: 0.9, ease: "power2.inOut" }, 58.4);
+      tl.to("#orb-final", { scale: 1.04, duration: 1.2, ease: "sine.inOut" }, 58.6);
+      tl.to("#orb-final", { opacity: 0.55, duration: 1.4, ease: "sine.inOut" }, 58.6);
+      // виньетка сжимает кадр к орбу в финале
+      tl.to("#fin-vignette", { opacity: 1, duration: 1.6, ease: "sine.inOut" }, 58.2);
+
+      // ============================================================
+      // ТИТРЫ
+      // ============================================================
+      function caption(sel, at, hold) {
+        tl.fromTo(sel, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, at);
+        tl.to(sel, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, at + hold);
+      }
+      caption("#cap-1", 1.0, 4.2);    // орб
+      caption("#cap-2", 6.6, 3.4);    // barge-in
+      caption("#cap-3", 15.6, 3.6);   // z-sense
+      caption("#cap-4", 23.6, 4.4);   // память
+      caption("#cap-5", 33.6, 4.4);   // S(t)
+      caption("#cap-6", 41.6, 4.4);   // приватность
+      caption("#cap-7", 52.0, 4.6);   // финал
+
+      // ---------- переходные свипы ----------
+      function wipe(sel, at) {
+        const node = document.querySelector(sel);
+        tl.fromTo(node, { scaleX: 0, transformOrigin: "left center" }, { scaleX: 1, duration: 0.4, ease: "power3.in" }, at);
+        tl.set(node, { transformOrigin: "right center" }, at + 0.44);
+        tl.to(node, { scaleX: 0, duration: 0.4, ease: "power3.out" }, at + 0.48);
+      }
+
+      window.__timelines["archie-promo-60"] = tl;
+    </script>
+  </body>
+</html>

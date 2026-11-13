@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archie — OS-Level AI Symbiote · v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060E; --bg2:#0B0B1A; --card:#121225; --card2:#1A1A33;
+  --ink:#EEF0FA; --muted:#9BA3C0; --soft:#C9CFF0;
+  --violet:#8B5CF6; --violet-soft:#A78BFA; --cyan:#22D3EE; --rose:#FB7185;
+  --blue:#7EA6E8; --deep:#4C1D95; --teal:#0E7490;
+  --line:rgba(255,255,255,.09); --panel:rgba(255,255,255,.035);
+  --display:'Unbounded',system-ui,sans-serif;
+  --body:'Manrope',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--body);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55}
+::selection{background:rgba(139,92,246,.45);color:#fff}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+/* ============ живой фон: canvas-aurora + зерно ============ */
+#aurora{position:fixed;inset:0;z-index:0}
+#stars{position:fixed;inset:0;z-index:0}
+.grain{position:fixed;inset:0;z-index:3;opacity:.055;pointer-events:none;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+#vig{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 120% 105% at 50% 45%,transparent 55%,rgba(3,3,10,.55) 100%)}
+
+/* ============ 16:9 stage ============ */
+#deck{position:fixed;inset:0;z-index:1}
+#stage{position:absolute;width:1280px;height:720px;transform-origin:center center;left:50%;top:50%}
+.slide{position:absolute;inset:0;visibility:hidden;opacity:0;padding:46px 60px 74px;overflow:hidden}
+.slide.active{visibility:visible;opacity:1}
+.slide.leaving{visibility:visible}
+.st{will-change:transform,opacity}
+
+/* ============ общие ============ */
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--violet-soft);
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;font-weight:700}
+.kicker::before{content:"";width:36px;height:1px;background:linear-gradient(90deg,var(--violet),transparent)}
+h2.title{font-family:var(--display);font-weight:600;font-size:33px;letter-spacing:-.01em;line-height:1.14;margin-bottom:22px}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;
+  box-shadow:0 14px 34px rgba(0,0,0,.5);position:relative}
+.card2{background:var(--card2)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--muted)}
+.gline{position:absolute;left:60px;right:60px;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.4) 30%,rgba(34,211,238,.4) 70%,transparent)}
+
+/* ============ навигация ============ */
+#dots{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:10;display:flex;gap:9px}
+#dots button{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.2);
+  transition:all .4s var(--ease);box-shadow:0 0 0 4px transparent}
+#dots button:hover{background:var(--violet-soft)}
+#dots button.on{background:var(--violet);box-shadow:0 0 12px var(--violet),0 0 0 4px rgba(139,92,246,.18);transform:scale(1.3)}
+#pcount{position:fixed;right:32px;bottom:19px;z-index:10;font-family:var(--mono);font-size:12px;color:var(--muted)}
+#pcount b{color:var(--ink)}
+#help{position:fixed;left:32px;bottom:19px;z-index:10;font-family:var(--mono);font-size:11px;color:rgba(155,163,192,.55);letter-spacing:.05em}
+#help kbd{border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:var(--mono);color:var(--muted);background:rgba(255,255,255,.04)}
+#autoplay{position:fixed;right:32px;top:22px;z-index:10;font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+  color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 16px;background:rgba(255,255,255,.03);
+  transition:all .35s var(--ease);overflow:hidden}
+#autoplay.on{color:var(--cyan);border-color:rgba(34,211,238,.5);box-shadow:0 0 18px rgba(34,211,238,.25)}
+#autoplay .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:8px;vertical-align:1px}
+#autoplay.on .led{animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+#autoBar{position:absolute;left:0;bottom:0;height:2px;width:0;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+#progress{position:fixed;left:0;top:0;height:2px;background:linear-gradient(90deg,var(--violet),var(--cyan));
+  z-index:11;transition:width .5s var(--ease);box-shadow:0 0 10px rgba(139,92,246,.7)}
+
+/* ============ 1 — ТИТУЛ ============ */
+.s-title{display:flex;flex-direction:column;justify-content:center}
+#orbCanvas{position:absolute;top:96px;right:36px;width:340px;height:340px}
+.s-title .brand{font-family:var(--display);font-weight:800;font-size:96px;letter-spacing:.12em;line-height:1.02;
+  background:linear-gradient(100deg,#EEF0FA 18%,#C4B5FD 44%,#8B5CF6 62%,#22D3EE 88%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 46px rgba(139,92,246,.5))}
+.s-title .brand span{display:inline-block}
+.s-title .tagline{font-family:var(--display);font-weight:400;font-size:23px;color:var(--violet-soft);margin-top:14px;letter-spacing:.02em}
+.s-title .meta{color:var(--muted);font-size:14.5px;margin-top:16px;max-width:58ch;line-height:1.65}
+.s-title .meta b{color:var(--soft)}
+.wave{display:flex;align-items:center;gap:5px;margin-top:30px;height:46px}
+.wave i{width:5px;border-radius:3px;background:linear-gradient(180deg,var(--cyan),var(--violet));height:8px}
+.s-title .ver{position:absolute;bottom:24px;right:60px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.s-title .stack{position:absolute;bottom:24px;left:60px;display:flex;gap:8px;flex-wrap:wrap;max-width:560px}
+.s-title .stack span{font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line);
+  border-radius:999px;padding:3px 10px;background:rgba(255,255,255,.03)}
+
+/* ============ 2 — ВИДЕНИЕ+ЦИФРЫ ============ */
+.grid2{display:grid;grid-template-columns:1fr 380px;gap:20px}
+.feat{display:flex;gap:16px;padding:15px 20px;margin-bottom:13px}
+.feat:last-child{margin-bottom:0}
+.feat .ic{width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:15px;color:#06060E}
+.feat h3{font-size:16.5px;font-weight:800;margin-bottom:4px}
+.feat p{font-size:12.5px;color:var(--muted);line-height:1.45}
+.stats{padding:20px 24px;display:flex;flex-direction:column;justify-content:space-between}
+.stats h3{font-family:var(--display);font-weight:600;font-size:17px;margin-bottom:4px}
+.stat .v{font-family:var(--display);font-weight:800;font-size:33px;line-height:1.1}
+.stat .l{font-size:12.5px;color:var(--muted)}
+
+/* ============ 3 — ЖИВОЙ КОНВЕЙЕР ============ */
+.plat{display:grid;grid-template-columns:repeat(5,1fr) 34px repeat(5,1fr);gap:0;align-items:stretch;margin-top:4px}
+.plat .pseg{display:flex;align-items:center;justify-content:center}
+.plat .pseg svg{width:34px;height:40px}
+.plat .pseg svg path{stroke:#8B5CF6;stroke-width:2.5;fill:none}
+.plat .pseg svg .fseg{stroke-dasharray:7 6}
+.plat .pseg svg .farrow{stroke-linecap:round;stroke-linejoin:round}
+.pnode{padding:15px 10px 13px;text-align:center;position:relative}
+.pnode .ic{width:42px;height:42px;margin:0 auto 10px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:14px;color:#06060E;box-shadow:0 0 20px currentColor}
+.pnode h4{font-size:14px;font-weight:800;margin-bottom:5px}
+.pnode p{font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5}
+.plat2{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pnote{padding:14px 20px;font-size:13px;color:var(--soft);line-height:1.55}
+.pnote b{color:var(--violet-soft)}
+.pnote .mono{font-size:11.5px}
+
+/* ============ 4 — АРХИТЕКТУРА ============ */
+.arch{display:grid;grid-template-columns:1fr 150px 1fr;gap:0;align-items:stretch;margin-top:4px}
+.abox{padding:19px 24px}
+.abox .hd{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.abox .hd .dot{width:10px;height:10px;border-radius:50%}
+.abox .hd .nm{font-family:var(--mono);font-weight:700;font-size:16px}
+.abox .sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.abox ul{list-style:none}
+.abox li{font-size:13px;color:var(--soft);padding:5px 0 5px 20px;position:relative}
+.abox li::before{content:"";position:absolute;left:2px;top:12px;width:7px;height:7px;border-radius:2px;transform:rotate(45deg)}
+.ac-cyan .hd .nm{color:var(--cyan)} .ac-cyan li::before{background:var(--cyan)}
+.ac-violet .hd .nm{color:var(--violet-soft)} .ac-violet li::before{background:var(--violet-soft)}
+.almid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.almid .pill{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);border:1px solid rgba(139,92,246,.55);
+  padding:8px 14px;border-radius:999px;background:rgba(139,92,246,.14);box-shadow:0 0 24px rgba(139,92,246,.4);white-space:nowrap}
+.almid .sm{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;line-height:1.5}
+#archLink{position:absolute;left:470px;top:292px;width:96px;height:126px;pointer-events:none}
+.arch-note{margin-top:14px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.arch-note b{color:var(--violet-soft)}
+
+/* ============ 5 — ГОЛОС ============ */
+.pipe{display:flex;gap:13px;align-items:stretch}
+.step{flex:1;padding:15px 12px 13px;text-align:center}
+.step .n{width:40px;height:40px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:16px;color:#06060E;box-shadow:0 0 20px currentColor}
+.step h4{font-size:15px;font-weight:800;margin-bottom:6px}
+.step p{font-family:var(--mono);font-size:9.5px;color:var(--muted);line-height:1.5}
+.pipeflow{margin-top:18px;padding:14px 22px;font-size:13px;color:var(--soft)}
+.pipeflow b{color:var(--rose)}
+.mutewin{margin-top:14px;padding:16px 22px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);border-radius:18px}
+.mutewin b{color:var(--violet-soft)}
+.mutewin p{font-size:13.5px;color:var(--soft);line-height:1.5}
+
+/* ============ 6 — ПАМЯТЬ ============ */
+.tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:stretch}
+.tier{padding:19px 22px;display:flex;flex-direction:column}
+.tier .t{font-family:var(--display);font-weight:800;font-size:26px}
+.tier .t2{font-size:15px;font-weight:800;margin:2px 0 8px}
+.tier p{font-size:12.5px;color:var(--muted);line-height:1.5;flex:1}
+.tier .f{font-family:var(--mono);font-size:10.5px;font-style:italic;margin-top:10px}
+.tflow{margin-top:16px;padding:16px 22px;font-size:13.5px;color:var(--soft);line-height:1.5}
+.tflow b{color:var(--cyan);font-family:var(--mono)}
+
+/* ============ 7 — ПРОАКТИВНОСТЬ ============ */
+.pro{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.missions{padding:19px 24px}
+.missions h3,.frus h3{font-size:16px;font-weight:800;margin-bottom:12px}
+.mission{display:flex;align-items:center;gap:14px;margin-bottom:9px}
+.mission .chip{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--cyan);border:1px solid rgba(34,211,238,.5);
+  padding:7px 12px;border-radius:9px;background:rgba(34,211,238,.08);min-width:150px;text-align:center}
+.mission .d{font-size:12.5px;color:var(--muted)}
+.missions .how{margin-top:12px;font-size:11.5px;color:var(--muted);line-height:1.5}
+.frus{padding:19px 24px}
+.frus h3{color:var(--rose)}
+.formula{font-family:var(--mono);font-size:14px;color:var(--violet-soft);background:rgba(139,92,246,.12);
+  border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:11px 16px;margin-bottom:8px;text-align:center}
+.frus ul{list-style:none}
+.frus li{font-size:12.5px;color:var(--soft);padding:4px 0 4px 18px;position:relative}
+.frus li::before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--rose)}
+#sChart{width:100%;height:92px;margin-top:4px;display:block}
+
+/* ============ 8 — LLM-КАСКАД ============ */
+.casc{display:grid;grid-template-columns:1fr 58px 1fr 58px 1fr;gap:0;align-items:stretch}
+.cprov{padding:21px 24px;position:relative;overflow:hidden}
+.cprov .nm{font-family:var(--mono);font-weight:700;font-size:23px;margin-bottom:6px}
+.cprov p{font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.cprov .badge{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:6px 12px;border-radius:999px;border:1px solid}
+.cbeam{display:flex;align-items:center;justify-content:center}
+.cbeam svg{overflow:visible}
+.cwhy{margin-top:18px;padding:16px 24px}
+.cwhy h4{font-size:14.5px;font-weight:800;margin-bottom:8px}
+.cwhy p{font-size:13px;color:var(--soft);line-height:1.55}
+.cwhy b{color:var(--violet-soft);font-family:var(--mono)}
+
+/* ============ 9 — СКОУП ============ */
+.scope{display:grid;grid-template-columns:1fr 1fr 1fr 300px;grid-auto-rows:min-content;gap:12px}
+.okc{padding:11px 14px;display:flex;gap:10px;align-items:center}
+.okc .ck{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:var(--cyan);color:#06060E;font-weight:800;font-size:13px;box-shadow:0 0 14px rgba(34,211,238,.5)}
+.okc h5{font-size:13px;font-weight:800}
+.okc p{font-size:10.5px;color:var(--muted)}
+.notin{grid-row:1/5;grid-column:4;padding:19px 22px;background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.28)}
+.notin h3{font-size:15px;font-weight:800;color:var(--rose);margin-bottom:12px}
+.notin ul{list-style:none}
+.notin li{font-size:12.5px;color:var(--muted);padding:5px 0 5px 16px;position:relative}
+.notin li::before{content:"×";position:absolute;left:0;color:var(--rose);font-weight:800}
+
+/* ============ 10 — ТЕСТЫ ============ */
+.tests{display:grid;grid-template-columns:1fr 366px;gap:20px}
+.bars{padding:20px 26px}
+.brow{display:grid;grid-template-columns:118px 1fr 44px;gap:12px;align-items:center;margin-bottom:12px}
+.brow .bl{font-family:var(--mono);font-size:12px;color:var(--soft);text-align:right}
+.brow .btrack{height:16px;border-radius:8px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
+.brow .bfill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,var(--violet),var(--cyan));
+  box-shadow:0 0 14px rgba(139,92,246,.5)}
+.brow .bv{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink)}
+.gates{padding:20px 24px}
+.gates h3{font-family:var(--display);font-weight:600;font-size:16px;margin-bottom:12px}
+.gates ul{list-style:none}
+.gates li{font-size:12.5px;color:var(--soft);padding:6px 0 6px 20px;position:relative}
+.gates li::before{content:"";position:absolute;left:2px;top:12px;width:7px;height:7px;border-radius:2px;transform:rotate(45deg);background:var(--violet-soft)}
+.gates .fin{margin-top:12px;font-size:11.5px;font-style:italic;color:var(--violet-soft);line-height:1.5}
+.bign{font-family:var(--display);font-weight:800;font-size:29px;background:linear-gradient(90deg,#C4B5FD,#22D3EE);
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+
+/* ============ 11 — РОАДМАП (таймлайн) ============ */
+#roadSvg{width:100%;height:46px;display:block;margin-top:6px}
+.rp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:2px}
+.rc{padding:16px 18px;border-top:3px solid}
+.rc h4{font-size:15px;font-weight:800;margin-bottom:6px}
+.rc .ph{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+.rc p{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ============ 12 — ФИНАЛ ============ */
+.s-final{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.s-final .big{font-family:var(--display);font-weight:800;font-size:52px;letter-spacing:.04em;line-height:1.2;max-width:22ch;
+  background:linear-gradient(100deg,#EEF0FA,#C4B5FD 40%,#22D3EE 90%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 40px rgba(139,92,246,.5))}
+.s-final .sm{color:var(--muted);margin-top:18px;font-size:15px}
+.s-final .sm b{color:var(--soft)}
+#orbCanvas2{position:absolute;bottom:66px;right:56px;width:150px;height:150px}
+.s-final .gh{position:absolute;bottom:28px;left:60px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){
+  #autoplay{display:none}
+  .wave i{height:24px!important}
+}
+</style>
+</head>
+<body>
+<canvas id="aurora"></canvas>
+<canvas id="stars"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div id="vig" aria-hidden="true"></div>
+<div id="progress"></div>
+<button id="autoplay" aria-pressed="false"><span class="led"></span>AUTO<span id="autoBar"></span></button>
+<div id="deck"><div id="stage">
+
+<!-- ================= 1. ТИТУЛ ================= -->
+<section class="slide s-title" id="s-title">
+  <canvas id="orbCanvas" aria-hidden="true"></canvas>
+  <h1 class="brand st" data-kinetic>ARCHIE</h1>
+  <div class="tagline st" data-d="2">OS-Level AI Symbiote</div>
+  <p class="meta st" data-d="3"><b>Phase 1 MVP</b> — автономный проактивный голосовой напарник, интегрированный в ОС.
+  Python-движок + Tauri v2 UI · gRPC IPC · локальные модели (Qwen3, Whisper, Piper, Silero VAD)</p>
+  <div class="wave st" data-d="4" id="wave" aria-hidden="true"></div>
+  <div class="stack st" data-d="5">
+    <span>Python 3.12</span><span>Tauri v2 · Rust</span><span>React 19 · TS</span><span>gRPC</span>
+    <span>SQLite + FTS5</span><span>Qwen3 GGUF</span><span>sherpa / whisper</span><span>piper TTS</span>
+  </div>
+  <div class="ver st" data-d="5">v0.1.0 · ноябрь 2026</div>
+</section>
+
+<!-- ================= 2. ВИДЕНИЕ + ЦИФРЫ ================= -->
+<section class="slide" id="s-vision">
+  <div class="gline"></div>
+  <div class="kicker st">видение</div>
+  <h2 class="title st" data-d="1">Что такое Archie</h2>
+  <div class="grid2">
+    <div>
+      <div class="card feat st" data-d="2"><div class="ic" style="background:var(--cyan)">◉</div><div>
+        <h3>Проактивный, не реактивный</h3><p>Арчи сам замечает контекст: активные окна, миссии, фрустрацию, вздохи — и решает, когда вмешаться.</p></div></div>
+      <div class="card feat st" data-d="3"><div class="ic" style="background:var(--violet-soft)">♪</div><div>
+        <h3>Голос первым классом</h3><p>Полный голосовой контур: VAD → STT → LLM → TTS с окном беззвучной отмены 4 с и barge-in.</p></div></div>
+      <div class="card feat st" data-d="4"><div class="ic" style="background:var(--blue)">▣</div><div>
+        <h3>Память, которая живёт</h3><p>Три тира: буфер сессии → эпизоды SQLite/FTS5 → профиль юзера с ночной пересборкой.</p></div></div>
+      <div class="card feat st" data-d="5"><div class="ic" style="background:var(--rose)">✚</div><div>
+        <h3>Приватность по умолчанию</h3><p>PII-санитайзер до облачных вызовов, офлайн-персона на локальной Qwen, облако — opt-in.</p></div></div>
+    </div>
+    <div class="card card2 stats st" data-d="3">
+      <h3>Phase 1 в цифрах</h3>
+      <div class="stat"><div class="v" style="color:var(--cyan)" data-count="251">0</div><div class="l">тестов проходят, 15 секунд</div></div>
+      <div class="stat"><div class="v" style="color:var(--violet-soft)" data-count="2.4" data-suffix=" ГБ" data-dec="1">0</div><div class="l">RAM воркера — один LLM-инстанс</div></div>
+      <div class="stat"><div class="v" style="color:var(--rose)" data-count="4" data-suffix=" с">0</div><div class="l">окно беззвучной отмены голоса</div></div>
+      <div class="stat"><div class="v" style="color:var(--blue)" data-count="4">0</div><div class="l">миссии конечного автомата</div></div>
+      <div class="stat"><div class="v" style="color:var(--soft)" data-count="8">0</div><div class="l">модулей покрыты тестами</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. ЖИВОЙ КОНВЕЙЕР ================= -->
+<section class="slide" id="s-flow">
+  <div class="gline"></div>
+  <div class="kicker st">e2e за 5 минут</div>
+  <h2 class="title st" data-d="1">Живой конвейер: от окна до голоса</h2>
+  <div class="plat">
+    <div class="card pnode st" data-d="2"><div class="ic" style="background:var(--cyan)">win</div><h4>Окно</h4>
+      <p>Hyprland-хуки · hyprctl<br>activewindow · поллинг 2 с</p></div>
+    <div class="pseg st" data-d="2"><svg viewBox="0 0 34 40"><path class="fseg" d="M2,20 H26"/><path class="farrow" d="M26,14 L32,20 L26,26"/></svg></div>
+    <div class="card pnode st" data-d="3"><div class="ic" style="background:var(--violet-soft)">grpc</div><h4>gRPC-шина</h4>
+      <p>TCP loopback<br>port-file<br>единый proto</p></div>
+    <div class="pseg st" data-d="3"><svg viewBox="0 0 34 40"><path class="fseg" d="M2,20 H26"/><path class="farrow" d="M26,14 L32,20 L26,26"/></svg></div>
+    <div class="card pnode st" data-d="4"><div class="ic" style="background:var(--rose)">ψ</div><h4>Движок</h4>
+      <p>миссия → фрустрация<br>Z-Sense OCR<br>порог 50</p></div>
+    <div class="pseg st" data-d="4"><svg viewBox="0 0 34 40" style="transform:rotate(180deg)"><path class="fseg" d="M2,20 H26"/><path class="farrow" d="M26,14 L32,20 L26,26"/></svg></div>
+    <div class="card pnode st" data-d="5"><div class="ic" style="background:var(--blue)">llm</div><h4>LLM</h4>
+      <p>aijuju qwen3.8-flash<br>+ память + persona<br>каскад фолбэков</p></div>
+    <div class="pseg st" data-d="5"><svg viewBox="0 0 34 40" style="transform:rotate(180deg)"><path class="fseg" d="M2,20 H26"/><path class="farrow" d="M26,14 L32,20 L26,26"/></svg></div>
+    <div class="card pnode st" data-d="6"><div class="ic" style="background:var(--cyan)">tts</div><h4>Голос</h4>
+      <p>Piper ru_RU · после<br>окна отмены ·<br>SYS_TTS_STOP</p></div>
+    <div class="pseg st" data-d="6"><svg viewBox="0 0 34 40"><path class="fseg" d="M2,20 H26"/><path class="farrow" d="M26,14 L32,20 L26,26"/></svg></div>
+  </div>
+  <div class="plat2">
+    <div class="card card2 pnote st" data-d="6"><b>Замкнутый цикл:</b> фразы юзера из STT падают в Tier-1, реакция Арчи — в память; следующий ответ уже знает, что было. <span class="mono dim">SYSTEMD: archie-app + archie-vite</span></div>
+    <div class="card card2 pnote st" data-d="7"><b>Критерий «первых 5 минут»:</b> port-файл появился, Main Dashboard открыт, engine.log пишет старт — этого достаточно, чтобы сказать «работает». Дальше конвейер начинает дышать.</div>
+  </div>
+</section>
+
+<!-- ================= 4. АРХИТЕКТУРА ================= -->
+<section class="slide" id="s-arch">
+  <div class="gline"></div>
+  <div class="kicker st">система</div>
+  <h2 class="title st" data-d="1">Архитектура: два контура</h2>
+  <div class="arch">
+    <div class="card card2 abox ac-cyan st" data-d="2">
+      <div class="hd"><span class="dot" style="background:var(--cyan);box-shadow:0 0 10px var(--cyan)"></span><span class="nm">apps-desktop-ui</span></div>
+      <div class="sub">Tauri v2 · Rust + React 19 + TypeScript</div>
+      <ul>
+        <li>Rust-шина: хуки Hyprland, окна, gRPC-клиент</li>
+        <li>Main Dashboard — состояние движка</li>
+        <li>Soft Widget — «орб» Арчи, speaking / idle</li>
+        <li>EventsTab — поток всех событий</li>
+      </ul>
+    </div>
+    <div class="almid st" data-d="3">
+      <div class="pill">gRPC</div>
+      <div class="sm">TCP loopback<br>port-file<br>/tmp/archie-ipc-&lt;uid&gt;.port</div>
+    </div>
+    <svg id="archLink" viewBox="0 0 96 126" aria-hidden="true">
+      <path id="archPath1" d="M2,13 C42,13 42,113 94,113" stroke="#22D3EE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path id="archPath2" d="M94,13 C42,13 42,113 2,113" stroke="#A78BFA" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle id="pk1" r="4" fill="#22D3EE" style="filter:drop-shadow(0 0 5px #22D3EE)"/><circle id="pk2" r="4" fill="#A78BFA" style="filter:drop-shadow(0 0 5px #A78BFA)"/>
+    </svg>
+    <div class="card card2 abox ac-violet st" data-d="4">
+      <div class="hd"><span class="dot" style="background:var(--violet);box-shadow:0 0 10px var(--violet)"></span><span class="nm">services-archie-engine</span></div>
+      <div class="sub">Python 3.12 · ядро когнитивной логики</div>
+      <ul>
+        <li>Миссии + индекс фрустрации (машина состояний)</li>
+        <li>LLM-каскад: aijuju → local → mock</li>
+        <li>Память Tier-1/2/3 + ночной rebuild</li>
+        <li>Аудио-тракт, Z-Sense OCR, семантика Qwen</li>
+      </ul>
+    </div>
+  </div>
+  <div class="arch-note st" data-d="5"><b>contracts/</b> — единый proto: события, состояния, диалог · UDS не работает (grpcio/tonic несовместимы) — TCP loopback честно зафиксирован в README</div>
+</section>
+
+<!-- ================= 5. ГОЛОС ================= -->
+<section class="slide" id="s-voice">
+  <div class="gline"></div>
+  <div class="kicker st">аудио-пайплайн</div>
+  <h2 class="title st" data-d="1">Голосовой контур</h2>
+  <div class="pipe">
+    <div class="card step st" data-d="1"><div class="n" style="background:var(--cyan)">1</div><h4>Микрофон</h4><p>arecord<br>16k mono</p></div>
+    <div class="card step st" data-d="2"><div class="n" style="background:var(--cyan)">2</div><h4>VAD</h4><p>Silero на onnxruntime,<br>энергия-предфильтр</p></div>
+    <div class="card step st" data-d="3"><div class="n" style="background:var(--rose)">3</div><h4>Barge-in</h4><p>half-duplex: TTS глушится<br>при речи юзера</p></div>
+    <div class="card step st" data-d="4"><div class="n" style="background:var(--cyan)">4</div><h4>STT</h4><p>sherpa-onnx zipformer ИЛИ<br>faster-whisper int8</p></div>
+    <div class="card step st" data-d="5"><div class="n" style="background:var(--violet-soft)">5</div><h4>LLM</h4><p>персона «Старшего Брата»<br>+ память</p></div>
+    <div class="card step st" data-d="6"><div class="n" style="background:var(--cyan)">6</div><h4>TTS</h4><p>Piper ru_RU ·<br>после окна отмены 4 с</p></div>
+  </div>
+  <div class="card card2 pipeflow st" data-d="7">Вздох детектируется → <b>+30 к фрустрации</b> · эхо-защита feed() при играющем TTS · <span class="mono">SYS_TTS_SPEAK / SYS_TTS_STOP</span> закрывают utterance-пачку — SoftWidget не виснет в «speaking»</div>
+  <div class="mutewin st" data-d="8"><b>Окно беззвучной отмены:</b> реплика Арчи звучит только после 4 с тишины — юзер может отmute-ть вмешательство, не услышав голос. Отмена после ответа LLM глушит TTS без гонок.</div>
+</section>
+
+<!-- ================= 6. ПАМЯТЬ ================= -->
+<section class="slide" id="s-memory">
+  <div class="gline"></div>
+  <div class="kicker st">долговременный контекст</div>
+  <h2 class="title st" data-d="1">Память: три тира</h2>
+  <div class="tiers">
+    <div class="card tier st" data-d="2">
+      <div class="t" style="color:var(--rose)">Tier-1</div><div class="t2">Буфер сессии</div>
+      <p>500 последних фактов диалога и событий. Фразы юзера из STT попадают сюда же.</p>
+      <div class="f" style="color:var(--rose)">триггер свёртки — смена миссии</div>
+    </div>
+    <div class="card tier st" data-d="3">
+      <div class="t" style="color:var(--cyan)">Tier-2</div><div class="t2">Эпизоды</div>
+      <p>SQLite + FTS5-trigram: поиск, orphan-recovery после падения воркера, слияние коротких эпизодов.</p>
+      <div class="f" style="color:var(--cyan)">свёртка — локальная Qwen3-1.7B</div>
+    </div>
+    <div class="card tier st" data-d="4">
+      <div class="t" style="color:var(--violet-soft)">Tier-3</div><div class="t2">Профиль юзера</div>
+      <p>Ночной rebuild в 04:00 + catch-up при старте; событие NIGHTLY_PROFILE_REBUILD летит в UI.</p>
+      <div class="f" style="color:var(--violet-soft)">подмешивается в промпт персоны</div>
+    </div>
+  </div>
+  <div class="card card2 tflow st" data-d="5"><b>build_memory_block():</b> профиль + 3 релевантных эпизода + буфер собираются в системный промпт персоны — Арчи помнит контекст между сессиями без эмбеддингов и LanceDB (вердикт разведки: FTS5 покрывает 5–50 эпизодов одно-юзерного MVP).</div>
+</section>
+
+<!-- ================= 7. ПРОАКТИВНОСТЬ ================= -->
+<section class="slide" id="s-proactive">
+  <div class="gline"></div>
+  <div class="kicker st">поведенческое ядро</div>
+  <h2 class="title st" data-d="1">Проактивность: миссии и фрустрация</h2>
+  <div class="pro">
+    <div class="card missions st" data-d="2">
+      <h3>Машина миссий</h3>
+      <div class="mission st" data-d="2"><span class="chip">STUDY_FOCUS</span><span class="d">учёба, полураспад 20 мин</span></div>
+      <div class="mission st" data-d="3"><span class="chip">CODING_WORK</span><span class="d">код, 15 мин</span></div>
+      <div class="mission st" data-d="4"><span class="chip">IDLE</span><span class="d">простой, 5 мин</span></div>
+      <div class="mission st" data-d="5"><span class="chip">GAMING_REST</span><span class="d">отдых, 1 мин</span></div>
+      <div class="how">Классификация: поллинг hyprctl (2 с) → SemanticClassifier на локальной Qwen3-1.7B few-shot → эвристика по заголовкам окон при conf &lt; 0.55</div>
+    </div>
+    <div class="card card2 frus st" data-d="3">
+      <h3>Индекс фрустрации</h3>
+      <div class="formula st" data-d="4">S(t) = min(S_max, S_prev·e^(−λ·dt) + μ·ψ·dS)</div>
+      <svg id="sChart" viewBox="0 0 520 96" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="0" y1="52" x2="520" y2="52" stroke="#FB7185" stroke-width="1" stroke-dasharray="5 5" opacity=".7"/>
+        <text x="6" y="47" fill="#FB7185" font-size="10" font-family="JetBrains Mono">порог вмешательства 50</text>
+        <path id="sPath" d="M0,92 C30,88 45,60 60,52 C80,44 90,34 110,38 C135,44 150,66 175,70 C200,74 210,40 240,30 C265,22 280,44 310,50 C340,56 350,84 385,88 C410,91 430,70 465,58 C490,50 505,44 520,40"
+          stroke="url(#sGrad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <defs><linearGradient id="sGrad" x1="0" x2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
+        <circle id="sDot" r="5" fill="#EEF0FA" opacity="0" style="filter:drop-shadow(0 0 6px #A78BFA)"/>
+      </svg>
+      <ul>
+        <li class="st" data-d="5">Порог вмешательства — 50, S_max 100</li>
+        <li class="st" data-d="6">Экспоненциальный полураспад по миссии (20/15/5/1 мин)</li>
+        <li class="st" data-d="7">Вздох юзера: +30 (HPF от DC-офсета микрофона)</li>
+        <li class="st" data-d="8">Порт канона RFC-0001, покрыт unit-тестами</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 8. LLM-КАСКАД ================= -->
+<section class="slide" id="s-llm">
+  <div class="gline"></div>
+  <div class="kicker st">надёжность</div>
+  <h2 class="title st" data-d="1">LLM-контур: graceful degradation</h2>
+  <div class="casc">
+    <div class="card cprov st" data-d="2">
+      <div class="nm" style="color:var(--cyan)">aijuju</div>
+      <p>облако · qwen3.8-flash<br>OpenAI-совместимый API</p>
+      <span class="badge" style="color:var(--cyan);border-color:rgba(34,211,238,.5)">дефолт</span>
+    </div>
+    <div class="cbeam st" data-d="3">
+      <svg width="58" height="40" viewBox="0 0 58 40"><path id="cb1" d="M0,20 H58" stroke="#FB7185" stroke-width="2.5" fill="none" stroke-dasharray="6 6"/></svg>
+    </div>
+    <div class="card cprov st" data-d="4">
+      <div class="nm" style="color:var(--violet-soft)">local</div>
+      <p>офлайн · Qwen3-1.7B GGUF<br>llama_shared + locked_completion</p>
+      <span class="badge" style="color:var(--violet-soft);border-color:rgba(167,139,250,.5)">при GatewayTimeout</span>
+    </div>
+    <div class="cbeam st" data-d="5">
+      <svg width="58" height="40" viewBox="0 0 58 40"><path id="cb2" d="M0,20 H58" stroke="#FB7185" stroke-width="2.5" fill="none" stroke-dasharray="6 6"/></svg>
+    </div>
+    <div class="card cprov st" data-d="6">
+      <div class="nm" style="color:#8FA1C0">mock</div>
+      <p>детерминированный<br>для тестов</p>
+      <span class="badge" style="color:#8FA1C0;border-color:rgba(143,161,192,.5)">если и local лёг</span>
+    </div>
+  </div>
+  <div class="card card2 cwhy st" data-d="7">
+    <h4>Почему это важно</h4>
+    <p>Каскад срабатывает до конца сессии — не ретраит вслепую. <b>locked_completion</b> сериализует доступ к единому инстансу llama.cpp — закрывает гонку «консолидация памяти в executor vs классификация в event-loop». Один инстанс LLM на воркер = ~2.4 ГБ RAM вместо ×3.</p>
+  </div>
+</section>
+
+<!-- ================= 9. ЧЕСТНЫЙ СКОУП ================= -->
+<section class="slide" id="s-scope">
+  <div class="gline"></div>
+  <div class="kicker st">статус MVP</div>
+  <h2 class="title st" data-d="1">Честный скоуп: что работает</h2>
+  <div class="scope">
+    <div class="card okc st" data-d="2"><span class="ck">✓</span><div><h5>Индекс фрустрации</h5><p>порт формулы RFC, юнит-тесты</p></div></div>
+    <div class="card okc st" data-d="3"><span class="ck">✓</span><div><h5>Машина миссий</h5><p>4 миссии + Qwen-классификатор</p></div></div>
+    <div class="card okc st" data-d="4"><span class="ck">✓</span><div><h5>LLM-каскад</h5><p>aijuju → local → mock</p></div></div>
+    <div class="notin st" data-d="3">
+      <h3>Не в MVP</h3>
+      <ul>
+        <li>Полнодуплекс AEC3 (Phase 2)</li>
+        <li>OS-hooks события (поллинг)</li>
+        <li>SOP / песочница / Permission Tiers</li>
+        <li>MCP-hub</li>
+        <li>RAM-бюджеты как SLA-гейт</li>
+      </ul>
+      <p class="dim" style="font-size:11px;margin-top:14px;line-height:1.5;font-style:italic">Правило честности: числа RFC-0001 в этом репо не заявляются. Всё, что не ✅ в README §2, — не работает.</p>
+    </div>
+    <div class="card okc st" data-d="4"><span class="ck">✓</span><div><h5>Память Tier-1/2/3</h5><p>SQLite/FTS5, ночной rebuild</p></div></div>
+    <div class="card okc st" data-d="5"><span class="ck">✓</span><div><h5>Голос</h5><p>VAD + STT + TTS + окно отмены</p></div></div>
+    <div class="card okc st" data-d="5"><span class="ck">✓</span><div><h5>Barge-in</h5><p>half-duplex + вздохи</p></div></div>
+    <div class="card okc st" data-d="6"><span class="ck">✓</span><div><h5>Z-Sense</h5><p>скрин + RapidOCR + PII-санитайзер</p></div></div>
+    <div class="card okc st" data-d="6"><span class="ck">✓</span><div><h5>IPC</h5><p>gRPC TCP loopback, port-file</p></div></div>
+  </div>
+</section>
+
+<!-- ================= 10. ТЕСТЫ ================= -->
+<section class="slide" id="s-tests">
+  <div class="gline"></div>
+  <div class="kicker st">инженерная культура</div>
+  <h2 class="title st" data-d="1">Качество: 251 тест за 15 секунд</h2>
+  <div class="tests">
+    <div class="card bars st" data-d="2">
+      <div class="brow st" data-d="2"><span class="bl">proactivity</span><div class="btrack"><div class="bfill" data-w="100%"></div></div><span class="bv" data-count="76">0</span></div>
+      <div class="brow st" data-d="2"><span class="bl">audio</span><div class="btrack"><div class="bfill" data-w="43%"></div></div><span class="bv" data-count="33">0</span></div>
+      <div class="brow st" data-d="3"><span class="bl">memory</span><div class="btrack"><div class="bfill" data-w="42%"></div></div><span class="bv" data-count="32">0</span></div>
+      <div class="brow st" data-d="3"><span class="bl">zsense</span><div class="btrack"><div class="bfill" data-w="34%"></div></div><span class="bv" data-count="26">0</span></div>
+      <div class="brow st" data-d="4"><span class="bl">semantic</span><div class="btrack"><div class="bfill" data-w="33%"></div></div><span class="bv" data-count="25">0</span></div>
+      <div class="brow st" data-d="4"><span class="bl">nightly</span><div class="btrack"><div class="bfill" data-w="33%"></div></div><span class="bv" data-count="25">0</span></div>
+      <div class="brow st" data-d="5"><span class="bl">llm</span><div class="btrack"><div class="bfill" data-w="24%"></div></div><span class="bv" data-count="18">0</span></div>
+      <div class="brow st" data-d="5"><span class="bl">stt</span><div class="btrack"><div class="bfill" data-w="21%"></div></div><span class="bv" data-count="16">0</span></div>
+    </div>
+    <div class="card card2 gates st" data-d="4">
+      <div class="bign st" data-d="4"><span data-count="251">0</span> / <span data-count="251">0</span></div>
+      <h3>Гейты перед мержем</h3>
+      <ul>
+        <li>pytest — все зелёные</li>
+        <li>tsc --noEmit + vite build — UI-гейт</li>
+        <li>cargo check — при правках Rust</li>
+        <li>живой смоук семантики</li>
+      </ul>
+      <p class="fin">8 фиксов adversarial-ревью вошли в последний цикл</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 11. РОАДМАП ================= -->
+<section class="slide" id="s-roadmap">
+  <div class="gline"></div>
+  <div class="kicker st">горизонт</div>
+  <h2 class="title st" data-d="1">Дорожная карта</h2>
+  <svg id="roadSvg" viewBox="0 0 1160 46" preserveAspectRatio="none" aria-hidden="true">
+    <path id="roadPath" d="M14,23 H1146" stroke="url(#rGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <defs><linearGradient id="rGrad" x1="0" x2="1">
+      <stop offset="0" stop-color="#22D3EE"/><stop offset=".38" stop-color="#8B5CF6"/>
+      <stop offset=".66" stop-color="#7EA6E8"/><stop offset="1" stop-color="#FB7185"/></linearGradient></defs>
+    <g id="roadNodes">
+      <circle cx="14" cy="23" r="7" fill="#22D3EE" style="filter:drop-shadow(0 0 6px #22D3EE)"/>
+      <circle cx="440" cy="23" r="7" fill="#8B5CF6" style="filter:drop-shadow(0 0 6px #8B5CF6)"/>
+      <circle cx="775" cy="23" r="7" fill="#7EA6E8" style="filter:drop-shadow(0 0 6px #7EA6E8)"/>
+      <circle cx="1146" cy="23" r="7" fill="#FB7185" style="filter:drop-shadow(0 0 6px #FB7185)"/>
+    </g>
+  </svg>
+  <div class="rp">
+    <div class="card rc st" data-d="2" style="border-top-color:var(--cyan)">
+      <div class="ph" style="color:var(--cyan)">Phase 1 — сделано</div>
+      <h4 style="color:var(--cyan)">MVP-контуры</h4>
+      <p>Голос, память, проактивность, каскад LLM, gRPC IPC · 251 тест · циклы 0a257bd + f632f4d</p>
+    </div>
+    <div class="card rc st" data-d="3" style="border-top-color:var(--violet-soft)">
+      <div class="ph" style="color:var(--violet-soft)">Phase 2 — следующий</div>
+      <h4 style="color:var(--violet-soft)">Дуплекс и события</h4>
+      <p>Полнодуплекс AEC3 + shared-memory PCM · OS-hooks вместо поллинга · PII-конвейер полного цикла</p>
+    </div>
+    <div class="card rc st" data-d="4" style="border-top-color:var(--blue)">
+      <div class="ph" style="color:var(--blue)">Phase 3 — горизонт</div>
+      <h4 style="color:var(--blue)">Доверие</h4>
+      <p>Permission Tiers 1/2/3 · SOP-песочница + Semantic Router · staging-FS с блокировкой Delete · RAM-бюджеты как SLA</p>
+    </div>
+    <div class="card rc st" data-d="5" style="border-top-color:var(--rose)">
+      <div class="ph" style="color:var(--rose)">Phase 4 — enterprise</div>
+      <h4 style="color:var(--rose)">Масштаб</h4>
+      <p>PII-enterprise · MCP-коннекторы · SOC 2</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 12. ФИНАЛ ================= -->
+<section class="slide s-final" id="s-final">
+  <canvas id="orbCanvas2" aria-hidden="true"></canvas>
+  <div class="kicker st" style="justify-content:center">итог</div>
+  <div class="big st" data-d="2">Напарник, который слышит, помнит и не мешает</div>
+  <p class="sm st" data-d="4">Фрустрация считает вздохи · память спит в 04:00 · LLM не боится таймаутов · <b>251 тест</b> охраняют покой</p>
+  <p class="gh st" data-d="5">github: KodeMastering/Archie · Phase 1 MVP · v0.1.0</p>
+</section>
+
+</div></div>
+
+<div id="dots" role="tablist" aria-label="Слайды"></div>
+<div id="pcount"><b>1</b> / 12</div>
+<div id="help"><kbd>←</kbd><kbd>→</kbd> · колесо · свайп · <kbd>Space</kbd> auto · <kbd>F</kbd> fullscreen</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function(){
+'use strict';
+var HAS_GSAP = typeof window.gsap === 'object' || typeof window.gsap === 'function';
+var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var ANIM = HAS_GSAP && !reduced;
+
+/* ============ stage scaling ============ */
+var stage = document.getElementById('stage');
+function fit(){
+  var s = Math.min(window.innerWidth/1280, window.innerHeight/720);
+  stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+}
+window.addEventListener('resize', fit); fit();
+
+/* ============ aurora canvas ============ */
+var au = document.getElementById('aurora'), actx = au.getContext('2d');
+var blobs = [
+  {c:'#7C3AED', r:.55, x:.18, y:.16, sp:.00013, ph:0},
+  {c:'#0E7490', r:.5,  x:.85, y:.88, sp:.00009, ph:2},
+  {c:'#4C1D95', r:.6,  x:.55, y:.4,  sp:.00007, ph:4, o:.5},
+  {c:'#BE185D', r:.34, x:.1,  y:.75, sp:.00011, ph:1, o:.22}
+];
+function auResize(){ au.width = window.innerWidth; au.height = window.innerHeight; }
+auResize(); window.addEventListener('resize', auResize);
+function drawAurora(t){
+  actx.clearRect(0,0,au.width,au.height);
+  actx.globalCompositeOperation = 'lighter';
+  for (var i=0;i<blobs.length;i++){
+    var b = blobs[i];
+    var bx = (b.x + Math.sin(t*b.sp + b.ph)*.14) * au.width;
+    var by = (b.y + Math.cos(t*b.sp*1.3 + b.ph)*.12) * au.height;
+    var br = b.r * Math.max(au.width, au.height) * (1 + Math.sin(t*b.sp*2 + b.ph)*.08);
+    var g = actx.createRadialGradient(bx,by,0,bx,by,br);
+    g.addColorStop(0, b.c); g.addColorStop(1, 'rgba(0,0,0,0)');
+    actx.globalAlpha = (b.o||.6)*.5;
+    actx.fillStyle = g;
+    actx.fillRect(bx-br, by-br, br*2, br*2);
+  }
+  actx.globalAlpha = 1; actx.globalCompositeOperation = 'source-over';
+}
+
+/* ============ звёздный слой (мерцание) ============ */
+var sc = document.getElementById('stars'), sctx = sc.getContext('2d');
+var starList = [];
+function scResize(){
+  sc.width = window.innerWidth; sc.height = window.innerHeight;
+  starList = [];
+  var n = Math.floor(sc.width*sc.height/16000);
+  for (var i=0;i<n;i++){
+    starList.push({x:Math.random()*sc.width, y:Math.random()*sc.height,
+      r:.6+Math.random()*1.4, ph:Math.random()*6.28, sp:.0006+Math.random()*.0012,
+      c: Math.random()<.16 ? '#A78BFA' : (Math.random()<.1 ? '#22D3EE' : '#5B6187')});
+  }
+}
+scResize(); window.addEventListener('resize', scResize);
+function drawStars(t){
+  sctx.clearRect(0,0,sc.width,sc.height);
+  for (var i=0;i<starList.length;i++){
+    var s = starList[i];
+    var a = .25 + .45*(Math.sin(t*s.sp + s.ph)*.5+.5);
+    sctx.globalAlpha = a;
+    sctx.fillStyle = s.c;
+    sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, 7); sctx.fill();
+  }
+  sctx.globalAlpha = 1;
+}
+
+/* ============ 3D орб: фибоначчи-сфера + связующие линии ============ */
+function makeOrb(id, size, count){
+  var cv = document.getElementById(id);
+  if (!cv) return null;
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  cv.width = size*dpr; cv.height = size*dpr;
+  var ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var pts = [], N = count, i;
+  for (i=0;i<N;i++){
+    var y = 1 - (i/(N-1))*2, r = Math.sqrt(1-y*y), th = i*2.399963;
+    pts.push({x:Math.cos(th)*r, y:y, z:Math.sin(th)*r});
+  }
+  var mx = 0, my = 0, tmx = 0, tmy = 0;
+  if (window.PointerEvent){
+    window.addEventListener('pointermove', function(e){
+      tmx = (e.clientX/window.innerWidth - .5)*.9;
+      tmy = (e.clientY/window.innerHeight - .5)*.9;
+    });
+  }
+  function draw(t){
+    mx += (tmx - mx)*.04; my += (tmy - my)*.04;
+    ctx.clearRect(0,0,size,size);
+    var cx = size/2, cy = size/2, R = size*.36;
+    var breathe = 1 + Math.sin(t*.0012)*.045;
+    var ry = t*.00035 + mx*1.5, rx = Math.sin(t*.0002)*.25 + my;
+    var cosY = Math.cos(ry), sinY = Math.sin(ry), cosX = Math.cos(rx), sinX = Math.sin(rx);
+    // проекция
+    var proj = [];
+    for (var j=0;j<pts.length;j++){
+      var p = pts[j];
+      var x1 = p.x*cosY - p.z*sinY, z1 = p.x*sinY + p.z*cosY;
+      var y2 = p.y*cosX - z1*sinX,  z2 = p.y*sinX + z1*cosX;
+      var persp = 1/(1.6 - z2*.55);
+      proj.push({sx: cx + x1*R*breathe*persp, sy: cy + y2*R*breathe*persp,
+                 depth:(z2+1)/2, persp: persp});
+    }
+    // ядро
+    var core = ctx.createRadialGradient(cx-R*.3, cy-R*.35, R*.05, cx, cy, R);
+    core.addColorStop(0, 'rgba(196,181,253,.9)');
+    core.addColorStop(.45, 'rgba(139,92,246,.55)');
+    core.addColorStop(1, 'rgba(46,16,101,0)');
+    ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx,cy,R*breathe,0,7); ctx.fill();
+    // связующие линии между близкими передними точками (constellation)
+    ctx.lineWidth = .6;
+    for (var a=0;a<proj.length;a++){
+      var A = proj[a];
+      if (A.depth < .55) continue;
+      for (var b2=a+1;b2<proj.length;b2++){
+        var B = proj[b2];
+        if (B.depth < .55) continue;
+        var dx = A.sx-B.sx, dy = A.sy-B.sy;
+        var d2 = dx*dx+dy*dy;
+        if (d2 < 820){
+          var al = (1 - d2/820) * .12 * Math.min(A.depth, B.depth);
+          ctx.strokeStyle = 'rgba(167,139,250,'+al.toFixed(3)+')';
+          ctx.beginPath(); ctx.moveTo(A.sx,A.sy); ctx.lineTo(B.sx,B.sy); ctx.stroke();
+        }
+      }
+    }
+    // точки
+    for (var k=0;k<proj.length;k++){
+      var q = proj[k];
+      var a2 = .12 + q.depth*.75;
+      var rr = .7 + q.depth*1.4*q.persp;
+      ctx.fillStyle = q.depth > .82 ? 'rgba(34,211,238,'+a2+')' : 'rgba(196,181,253,'+a2+')';
+      ctx.beginPath(); ctx.arc(q.sx, q.sy, rr, 0, 7); ctx.fill();
+    }
+  }
+  return {draw: draw, canvas: cv};
+}
+var orb1 = makeOrb('orbCanvas', 340, 420);
+var orb2 = makeOrb('orbCanvas2', 150, 260);
+
+/* ============ waveform (title) ============ */
+var wave = document.getElementById('wave');
+var waveBars = [];
+(function(){
+  var heights = [.35,.6,.9,.55,.3,.15,.45,.8,.95,.7,.4,.2,.5,.85,.65,.35,.18,.45,.75,.5];
+  for (var i=0;i<heights.length;i++){
+    var el = document.createElement('i');
+    wave.appendChild(el);
+    waveBars.push({el: el, h: heights[i]});
+  }
+})();
+function drawWave(t){
+  for (var i=0;i<waveBars.length;i++){
+    var w = waveBars[i];
+    var h = 8 + Math.abs(Math.sin(t*.0022 + i*.55)) * w.h * 42;
+    w.el.style.height = h + 'px';
+  }
+}
+
+/* ============ rAF loop ============ */
+var activeId = 's-title';
+var lastStars = -1;
+function loop(t){
+  if (!reduced){
+    drawAurora(t);
+    drawStars(t);
+    if (activeId === 's-title'){ if (orb1) orb1.draw(t); drawWave(t); }
+    if (activeId === 's-final' && orb2) orb2.draw(t);
+  } else {
+    drawAurora(0);
+    if (lastStars !== 0){ drawStars(0); lastStars = 0; }
+    if (orb1) orb1.draw(0);
+    if (orb2) orb2.draw(0);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============ слайды / навигация ============ */
+var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+var cur = 0, busy = false, autoTimer = null, autoStart = 0;
+var AUTO_MS = 9000;
+var dots = document.getElementById('dots');
+var pcount = document.getElementById('pcount');
+var pcountB = pcount.querySelector('b');
+var progress = document.getElementById('progress');
+var autoBtn = document.getElementById('autoplay');
+var autoBar = document.getElementById('autoBar');
+
+slides.forEach(function(s, i){
+  var b = document.createElement('button');
+  b.setAttribute('aria-label', 'Слайд ' + (i+1));
+  b.addEventListener('click', function(){ go(i); });
+  dots.appendChild(b);
+});
+var dotBtns = Array.prototype.slice.call(dots.children);
+
+function countUp(el){
+  var target = parseFloat(el.getAttribute('data-count'));
+  var dec = parseInt(el.getAttribute('data-dec')||'0', 10);
+  var suffix = el.getAttribute('data-suffix')||'';
+  if (ANIM){
+    var o = {v: 0};
+    gsap.to(o, {v: target, duration: 1.4, ease: 'power2.out', delay: .4,
+      onUpdate: function(){ el.textContent = o.v.toFixed(dec) + suffix; },
+      onComplete: function(){ el.textContent = target.toFixed(dec) + suffix; }});
+  } else {
+    el.textContent = target.toFixed(dec) + suffix;
+  }
+}
+
+/* специальные анимации по слайдам */
+var hooks = {
+  's-flow': function(slide){
+    slide.querySelectorAll('.fseg').forEach(function(p, i){
+      if (ANIM){
+        gsap.fromTo(p, {strokeDashoffset: 26}, {strokeDashoffset: 0, duration: .7,
+          repeat: -1, ease: 'none', delay: i*.12});
+      } else { p.style.strokeDasharray = 'none'; }
+    });
+    slide.querySelectorAll('.farrow').forEach(function(p){
+      if (ANIM){
+        gsap.fromTo(p, {opacity: .3, scale: .85, transformOrigin: '50% 50%'},
+          {opacity: 1, scale: 1, duration: .55, repeat: -1, yoyo: true, ease: 'sine.inOut'});
+      }
+    });
+  },
+  's-vision': function(slide){
+    slide.querySelectorAll('[data-count]').forEach(function(el){ countUp(el); });
+  },
+  's-arch': function(slide){
+    var p1 = slide.querySelector('#archPath1'), p2 = slide.querySelector('#archPath2');
+    var pk1 = slide.querySelector('#pk1'), pk2 = slide.querySelector('#pk2');
+    [p1,p2].forEach(function(p){
+      if (!p) return;
+      var len = p.getTotalLength();
+      if (ANIM){
+        gsap.set(p, {strokeDasharray: len, strokeDashoffset: len});
+        gsap.to(p, {strokeDashoffset: 0, duration: .9, ease: 'power2.inOut', delay: .35});
+      } else { p.style.strokeDasharray = 'none'; }
+    });
+    [pk1,pk2].forEach(function(pk, idx){
+      if (!pk) return;
+      var path = idx === 0 ? p1 : p2;
+      if (ANIM){
+        var obj = {t: 0};
+        gsap.to(obj, {t: 1, duration: 1.1, delay: .5, repeat: -1, repeatDelay: .8, ease: 'power1.inOut',
+          onUpdate: function(){
+            var pt = path.getPointAtLength(obj.t * path.getTotalLength());
+            pk.setAttribute('cx', pt.x); pk.setAttribute('cy', pt.y);
+          }});
+      } else {
+        var pt = path.getPointAtLength(path.getTotalLength()*.55);
+        pk.setAttribute('cx', pt.x); pk.setAttribute('cy', pt.y);
+      }
+    });
+  },
+  's-proactive': function(slide){
+    var path = slide.querySelector('#sPath'), dot = slide.querySelector('#sDot');
+    if (!path) return;
+    var len = path.getTotalLength();
+    if (ANIM){
+      gsap.set(path, {strokeDasharray: len, strokeDashoffset: len});
+      var tl = gsap.timeline({delay: .5});
+      tl.to(path, {strokeDashoffset: 0, duration: 2.2, ease: 'power1.inOut'});
+      var o = {t: 0};
+      tl.to(o, {t: 1, duration: 2.2, ease: 'power1.inOut', onUpdate: function(){
+        var pt = path.getPointAtLength(o.t*len);
+        dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+      }}, 0);
+      tl.to(dot, {attr: {opacity: 1}, duration: .2}, 0);
+      tl.to(dot, {attr: {opacity: 0}, duration: .4}, 1.8);
+    } else { path.style.strokeDasharray = 'none'; }
+  },
+  's-llm': function(slide){
+    [slide.querySelector('#cb1'), slide.querySelector('#cb2')].forEach(function(p, i){
+      if (!p) return;
+      if (ANIM){
+        gsap.fromTo(p, {strokeDashoffset: 24}, {strokeDashoffset: 0, duration: .8, delay: .3 + i*.25,
+          repeat: -1, ease: 'none'});
+      } else { p.style.strokeDasharray = 'none'; }
+    });
+  },
+  's-tests': function(slide){
+    slide.querySelectorAll('[data-count]').forEach(function(el){ countUp(el); });
+    slide.querySelectorAll('.bfill').forEach(function(el, i){
+      if (ANIM){
+        gsap.to(el, {width: el.getAttribute('data-w'), duration: 1, ease: 'power3.out', delay: .3 + i*.08});
+      } else { el.style.width = el.getAttribute('data-w'); }
+    });
+  },
+  's-roadmap': function(slide){
+    var path = slide.querySelector('#roadPath'), nodes = slide.querySelector('#roadNodes');
+    if (!path) return;
+    var len = path.getTotalLength();
+    if (ANIM){
+      gsap.set(path, {strokeDasharray: len, strokeDashoffset: len});
+      gsap.set(nodes, {opacity: 0});
+      gsap.to(path, {strokeDashoffset: 0, duration: 1.4, ease: 'power2.inOut', delay: .3});
+      gsap.to(nodes, {opacity: 1, duration: .6, delay: 1.2, stagger: .12});
+    } else {
+      path.style.strokeDasharray = 'none';
+      nodes.style.opacity = 1;
+    }
+  }
+};
+
+/* kill-хуки: чистим бесконечные анимации при уходе */
+var kills = {
+  's-flow': function(slide){
+    slide.querySelectorAll('.fseg,.farrow').forEach(function(el){ if (HAS_GSAP) gsap.killTweensOf(el); });
+  },
+  's-arch': function(slide){
+    slide.querySelectorAll('#pk1,#pk2,#archPath1,#archPath2').forEach(function(el){ if (HAS_GSAP) gsap.killTweensOf(el); });
+  },
+  's-proactive': function(slide){
+    slide.querySelectorAll('#sPath,#sDot').forEach(function(el){ if (HAS_GSAP) gsap.killTweensOf(el); });
+  },
+  's-llm': function(slide){
+    slide.querySelectorAll('#cb1,#cb2').forEach(function(el){ if (HAS_GSAP) gsap.killTweensOf(el); });
+  },
+  's-roadmap': function(slide){
+    slide.querySelectorAll('#roadPath,#roadNodes').forEach(function(el){ if (HAS_GSAP) gsap.killTweensOf(el); });
+  }
+};
+
+/* вход слайда: staggered blur-in */
+function enter(slide){
+  if (!ANIM) return;
+  var els = slide.querySelectorAll('.st');
+  var kinetic = slide.querySelector('[data-kinetic]');
+  if (kinetic){
+    if (!kinetic.dataset.split){
+      var txt = kinetic.textContent;
+      kinetic.textContent = '';
+      txt.split('').forEach(function(ch){
+        var s = document.createElement('span');
+        s.textContent = ch;
+        kinetic.appendChild(s);
+      });
+      kinetic.dataset.split = '1';
+    }
+    var spans = kinetic.querySelectorAll('span');
+    gsap.fromTo(spans,
+      {y: 60, opacity: 0, rotateX: -70, filter: 'blur(14px)'},
+      {y: 0, opacity: 1, rotateX: 0, filter: 'blur(0px)', duration: .9, stagger: .07, ease: 'back.out(1.6)'}
+    );
+    els = slide.querySelectorAll('.st:not([data-kinetic])');
+  }
+  var items = [];
+  els.forEach ? els.forEach(function(e){ items.push(e); }) : Array.prototype.forEach.call(els, function(e){ items.push(e); });
+  var groups = {};
+  items.forEach(function(e){
+    var d = e.getAttribute('data-d') || '0';
+    (groups[d] = groups[d] || []).push(e);
+  });
+  Object.keys(groups).sort(function(a,b){ return a-b; }).forEach(function(k){
+    gsap.fromTo(groups[k],
+      {y: 34, opacity: 0, filter: 'blur(10px)'},
+      {y: 0, opacity: 1, filter: 'blur(0px)', duration: .8, stagger: .09, delay: .15 + parseInt(k,10)*.14,
+       ease: 'power3.out', clearProps: 'filter'}
+    );
+  });
+}
+
+function go(n, dir){
+  n = Math.max(0, Math.min(slides.length-1, n));
+  if (busy || n === cur) return;
+  busy = true;
+  var old = slides[cur], next = slides[n];
+  if (kills[old.id]) kills[old.id](old);
+  if (HAS_GSAP) gsap.killTweensOf(old.querySelectorAll('.st'));
+  old.classList.remove('active');
+  old.classList.add('leaving');
+  if (ANIM){
+    gsap.to(old, {opacity: 0, scale: .96, y: dir === 'back' ? 26 : -26, duration: .5, ease: 'power2.in',
+      onComplete: function(){ old.classList.remove('leaving'); old.style.opacity=''; old.style.transform=''; }});
+  } else {
+    setTimeout(function(){ old.classList.remove('leaving'); }, 400);
+  }
+  next.classList.add('active');
+  if (ANIM){
+    gsap.set(next, {opacity: 0, scale: 1.02, y: dir === 'back' ? -26 : 26});
+    gsap.to(next, {opacity: 1, scale: 1, y: 0, duration: .7, ease: 'power3.out', delay: .12,
+      onComplete: function(){ busy = false; }});
+  } else {
+    setTimeout(function(){ busy = false; }, 300);
+  }
+  setTimeout(function(){ if (busy && !ANIM) busy = false; }, 800);
+  cur = n;
+  activeId = next.id;
+  enter(next);
+  if (hooks[next.id]) hooks[next.id](next);
+  if (autoTimer) autoStart = Date.now();
+  dotBtns.forEach(function(b, i){ b.classList.toggle('on', i === n); });
+  pcountB.textContent = (n+1);
+  progress.style.width = ((n+1)/slides.length*100) + '%';
+  if (history.replaceState) history.replaceState(null, '', '#/' + (n+1));
+}
+
+function fwd(){ go(cur+1, 'fwd'); }
+function back(){ go(cur-1, 'back'); }
+
+/* hash */
+var m = /^#\/(\d+)$/.exec(location.hash);
+if (m){ cur = Math.max(0, Math.min(slides.length-1, parseInt(m[1],10)-1)); }
+window.addEventListener('hashchange', function(){
+  var mm = /^#\/(\d+)$/.exec(location.hash);
+  if (mm){ var n = parseInt(mm[1],10)-1; if (n >= 0 && n < slides.length && n !== cur) go(n, n > cur ? 'fwd' : 'back'); }
+});
+
+/* клавиши */
+window.addEventListener('keydown', function(e){
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+    if (e.key === ' '){ toggleAuto(); e.preventDefault(); return; }
+    e.preventDefault(); fwd();
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
+  if (e.key === 'Home'){ go(0, 'back'); }
+  if (e.key === 'End'){ go(slides.length-1, 'fwd'); }
+  if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.shiftKey && !e.altKey){ toggleFs(); }
+});
+
+/* fullscreen */
+function toggleFs(){
+  if (document.fullscreenElement){ document.exitFullscreen && document.exitFullscreen(); }
+  else if (document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen(); }
+}
+
+/* колесо (анти-дребезг) */
+var wheelLock = 0;
+window.addEventListener('wheel', function(e){
+  var now = Date.now();
+  if (now - wheelLock < 900 || Math.abs(e.deltaY) < 24) return;
+  wheelLock = now;
+  if (e.deltaY > 0) fwd(); else back();
+}, {passive: true});
+
+/* свайп */
+var tx = 0, ty = 0;
+window.addEventListener('touchstart', function(e){
+  tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+}, {passive: true});
+window.addEventListener('touchend', function(e){
+  var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.4){ if (dx < 0) fwd(); else back(); }
+}, {passive: true});
+
+/* autoplay: 9 с/слайд + прогресс-полоска в кнопке */
+function autoTick(){
+  if (Date.now() - autoStart >= AUTO_MS){
+    if (cur >= slides.length-1){ go(0, 'back'); } else { fwd(); }
+    autoStart = Date.now();
+  } else if (autoBar){
+    autoBar.style.width = ((Date.now() - autoStart)/AUTO_MS*100) + '%';
+  }
+}
+function toggleAuto(){
+  if (autoTimer){ clearInterval(autoTimer); autoTimer = null; autoBtn.classList.remove('on');
+    autoBtn.setAttribute('aria-pressed','false'); if (autoBar) autoBar.style.width = '0';
+  } else {
+    autoStart = Date.now();
+    autoTimer = setInterval(autoTick, 100);
+    autoBtn.classList.add('on'); autoBtn.setAttribute('aria-pressed','true');
+    fwd();
+  }
+}
+autoBtn.addEventListener('click', toggleAuto);
+
+/* старт */
+slides[cur].classList.add('active');
+activeId = slides[cur].id;
+dotBtns[cur].classList.add('on');
+progress.style.width = ((cur+1)/slides.length*100) + '%';
+enter(slides[cur]);
+if (hooks[slides[cur].id]) hooks[slides[cur].id](slides[cur]);
+})();
+</script>
+</body>
+</html>

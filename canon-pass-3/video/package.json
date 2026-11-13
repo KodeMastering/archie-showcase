@@ -1,0 +1,14 @@
+{
+  "name": "archie-promo-60",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "check": "hyperframes check",
+    "preview": "hyperframes preview --background",
+    "render": "hyperframes render --quality delivery --fps 30",
+    "render:draft": "hyperframes render --quality draft"
+  },
+  "devDependencies": {
+    "hyperframes": "latest"
+  }
+}
